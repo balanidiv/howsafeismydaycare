@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Facility · How Safe Is My Daycare?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+:root {
+  --paper: #f3eee4;
+  --paper-2: #e8e1d2;
+  --ink: #1c1914;
+  --ink-2: #4a453c;
+  --rule: #c9c0ad;
+  --stamp: #b42318;
+  --stamp-ink: #fff8f0;
+  --moss: #2f4a3c;
+  --moss-2: #dce8df;
+  --gold: #8a6a1a;
+  --warn: #8a4b12;
+  --closed: #5c5346;
+  --shadow: 0 1px 0 rgba(28, 25, 20, 0.06);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "IBM Plex Sans", "Source Sans 3", system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: inherit; }
+a:hover { color: var(--stamp); }
+
+.wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--rule);
+}
+.mark {
+  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+.mark em { font-style: italic; font-weight: 500; color: var(--stamp); }
+nav { display: flex; gap: 18px; font-size: 0.92rem; }
+nav a { text-decoration: none; color: var(--ink-2); }
+
+.hero { padding: 56px 0 28px; }
+.kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  font-weight: 600;
+}
+h1 {
+  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
+  font-weight: 560;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin: 10px 0 14px;
+}
+.lede { max-width: 38rem; color: var(--ink-2); font-size: 1.08rem; }
+
+.search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 28px 0 10px;
+  padding: 8px;
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow);
+}
+.search input {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 12px 14px;
+  outline: none;
+  width: 100%;
+}
+.search button, .btn {
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+.hints { color: var(--ink-2); font-size: 0.9rem; }
+.hints button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.status { margin: 22px 0; color: var(--ink-2); }
+.err {
+  background: #f6e4de;
+  border: 1px solid #e0b8ad;
+  padding: 12px 14px;
+  margin: 16px 0;
+}
+
+.grid { display: grid; gap: 12px; padding-bottom: 64px; }
+.card {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 16px;
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  padding: 16px 18px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+.card:hover { border-color: var(--ink); }
+.card h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 560;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+.meta { color: var(--ink-2); font-size: 0.92rem; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pill {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--rule);
+  padding: 3px 7px;
+  color: var(--ink-2);
+}
+
+.grade {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  display: grid;
+  place-items: center;
+  align-self: start;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 650;
+  font-size: 1.7rem;
+  line-height: 1;
+  transform: rotate(-8deg);
+}
+.grade small { display: block; font-family: "IBM Plex Sans", sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; }
+.g-A { color: var(--moss); background: var(--moss-2); }
+.g-B { color: #245c4a; background: #e3efe8; }
+.g-C { color: var(--gold); background: #f3ead0; }
+.g-D { color: var(--warn); background: #f6e6d2; }
+.g-F, .g-X { color: var(--stamp); background: #f7e4df; }
+.g-Z { color: var(--closed); background: #ece8df; }
+
+.page { padding: 36px 0 80px; }
+.crumb { color: var(--ink-2); font-size: 0.9rem; margin-bottom: 10px; }
+.crumb a { color: inherit; }
+.title-row { display: grid; grid-template-columns: 1fr 96px; gap: 20px; align-items: start; }
+h2.page-title, .page h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 22px 0;
+}
+.stat {
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  padding: 12px 14px;
+}
+.stat b { display: block; font-size: 1.15rem; }
+.stat span { color: var(--ink-2); font-size: 0.82rem; }
+
+.section h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.4rem;
+  margin: 36px 0 12px;
+}
+.row {
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.row strong { display: block; }
+.muted { color: var(--ink-2); }
+.risk {
+  display: inline-block;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  margin-right: 6px;
+}
+.risk.High { color: var(--stamp); }
+.risk.Medium.High, .risk.mh { color: var(--warn); }
+
+.prose { max-width: 42rem; }
+.prose h1 { font-size: 2.4rem; margin-bottom: 12px; }
+.prose h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.35rem; margin-top: 32px; }
+.prose p, .prose li { color: var(--ink-2); }
+.prose table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.prose th, .prose td { text-align: left; border-bottom: 1px solid var(--rule); padding: 7px 6px; font-size: 0.95rem; }
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 22px 0 40px;
+  color: var(--ink-2);
+  font-size: 0.88rem;
+}
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .search { grid-template-columns: 1fr; }
+  .card, .title-row { grid-template-columns: 1fr; }
+  .grade { width: 68px; height: 68px; }
+}
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="mark" href="index.html">How <em>safe</em> is my daycare?</a>
+      <nav>
+        <a href="about.html">How this works</a>
+        <a href="https://divy.am" rel="noopener">Div Balani</a>
+      </nav>
+    </header>
+    <div class="page" id="app">
+      <p class="muted">Loading official record…</p>
+    </div>
+  </div>
+  <footer>
+    <div class="wrap">
+      <div>Source: Texas HHSC Child Care Licensing open data. Not an official state grade.</div>
+      <div><a href="about.html">Methodology</a></div>
+    </div>
+  </footer>
+  <script>
+const SODA = "https://data.texas.gov/resource";
+const OPS = `${SODA}/bc5r-88dy.json`;
+const ACT = `${SODA}/m5q4-3y3d.json`;
+const NC = `${SODA}/tqgd-mf4x.json`;
+const DAYCARE_TYPES = [
+  "Licensed Center",
+  "Licensed Child-Care Home",
+  "Registered Child-Care Home",
+  "Listed Family Home",
+];
+const TYPE_SQL = DAYCARE_TYPES.map((t) => `'${t}'`).join(",");
+
+function gradeOf(op) {
+  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown" };
+  const closed =
+    String(op.operation_status).toUpperCase() !== "Y" ||
+    String(op.temporarily_closed).toUpperCase() === "YES";
+  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive" };
+
+  let score = 100;
+  const n = (k) => Number(op[k] || 0);
+  score -= n("deficiency_high") * 12;
+  score -= n("deficiency_medium_high") * 7;
+  score -= n("deficiency_medium") * 4;
+  score -= n("deficiency_medium_low") * 2;
+  score -= n("deficiency_low") * 1;
+  if (String(op.adverse_action).toUpperCase() === "YES") score -= 20;
+  if (String(op.corrective_action).toUpperCase() === "YES") score -= 10;
+  score = Math.max(0, Math.min(100, score));
+  const letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+  return { letter, score, cls: `g-${letter}`, label: `${score} / 100` };
+}
+
+function zipOf(op) {
+  return String(op.zipcode || "").replace(/\s+/g, " ").trim().slice(0, 5);
+}
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function sodaWhere(expr, extra = "") {
+  const url = new URL(OPS);
+  url.searchParams.set("$where", expr);
+  url.searchParams.set("$limit", "40");
+  url.searchParams.set("$order", "deficiency_high DESC, operation_name ASC");
+  if (extra) url.searchParams.set("$select", extra);
+  return url.toString();
+}
+
+async function searchFacilities(q) {
+  const raw = (q || "").trim();
+  const type = `operation_type in (${TYPE_SQL})`;
+  let where;
+  if (!raw) {
+    where = `${type} AND upper(city)='AUSTIN' AND operation_status='Y'`;
+  } else if (/^\d{5}$/.test(raw)) {
+    where = `${type} AND starts_with(zipcode,'${raw}')`;
+  } else if (/^[A-Za-z .'-]+$/.test(raw) && raw.length < 28) {
+    const city = raw.replace(/'/g, "''").toUpperCase();
+    const name = city;
+    where = `${type} AND (upper(city)='${city}' OR upper(operation_name) like '%${name}%')`;
+  } else {
+    const safe = raw.replace(/'/g, "''").toUpperCase();
+    where = `${type} AND (upper(operation_name) like '%${safe}%' OR upper(city) like '%${safe}%' OR zipcode like '${safe}%')`;
+  }
+  const res = await fetch(sodaWhere(where));
+  if (!res.ok) throw new Error(`Texas open data returned ${res.status}`);
+  return res.json();
+}
+
+async function getFacility(id) {
+  const url = new URL(OPS);
+  url.searchParams.set("$where", `operation_id='${id}'`);
+  url.searchParams.set("$limit", "1");
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Texas open data returned ${res.status}`);
+  const rows = await res.json();
+  return rows[0] || null;
+}
+
+async function getInspections(id) {
+  const url = new URL(ACT);
+  url.searchParams.set("$where", `operation_id='${id}'`);
+  url.searchParams.set("$order", "activity_date DESC");
+  url.searchParams.set("$limit", "50");
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+async function getDeficiencies(id) {
+  const url = new URL(NC);
+  url.searchParams.set("$where", `operation_id='${id}'`);
+  url.searchParams.set("$order", "corrected_date DESC");
+  url.searchParams.set("$limit", "80");
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+function gradeEl(g) {
+  return `<div class="grade ${g.cls}" title="${g.label}"><div>${g.letter}<small>${g.score == null ? g.label : g.score}</small></div></div>`;
+}
+
+function cardHTML(op) {
+  const g = gradeOf(op);
+  const zip = zipOf(op);
+  const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
+  const defs = Number(op.deficiency_high || 0) + Number(op.deficiency_medium_high || 0);
+  return `<a class="card" href="${href}">
+    ${gradeEl(g)}
+    <div>
+      <h2>${escapeHtml(op.operation_name || "Unnamed facility")}</h2>
+      <div class="meta">${escapeHtml(op.city || "")}${zip ? ", TX " + zip : ""} · ${escapeHtml(op.operation_type || "")}</div>
+      <div class="pills">
+        <span class="pill">${op.operation_status === "Y" ? "Open" : "Inactive"}</span>
+        <span class="pill">Cap. ${op.total_capacity || "—"}</span>
+        <span class="pill">${op.total_inspections || 0} inspections</span>
+        <span class="pill">${defs} high / med-high findings</span>
+      </div>
+    </div>
+  </a>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[c]));
+}
+
+</script>
+<script >
+    const app = document.getElementById("app");
+    const id = new URLSearchParams(location.search).get("id");
+
+    function riskClass(level) {
+      const l = String(level || "");
+      if (l === "High") return "risk High";
+      if (l.includes("Medium High")) return "risk mh";
+      return "risk";
+    }
+
+    try {
+      if (!id) throw new Error("Missing facility id");
+      const [op, acts, defs] = await Promise.all([
+        getFacility(id),
+        getInspections(id),
+        getDeficiencies(id),
+      ]);
+      if (!op) throw new Error("That operation id is not in the Texas daycare file.");
+      const g = gradeOf(op);
+      document.title = `${op.operation_name} · How Safe Is My Daycare?`;
+      const zip = zipOf(op);
+      const portal = `https://data.texas.gov/resource/bc5r-88dy.json?$where=operation_id='${id}'`;
+      const hhsc = "https://childcare.hhs.texas.gov/Public/ChildCareSearch";
+
+      app.innerHTML = `
+        <div class="crumb"><a href="index.html">Search</a> / ${escapeHtml(op.city || "Texas")}</div>
+        <div class="title-row">
+          <div>
+            <div class="kicker">${escapeHtml(op.operation_type || "")} · #${escapeHtml(op.operation_number || op.operation_id)}</div>
+            <h1>${escapeHtml(op.operation_name || "Facility")}</h1>
+            <p class="muted">${escapeHtml(op.location_address || "")}${zip ? " · " + zip : ""}</p>
+          </div>
+          ${gradeEl(g)}
+        </div>
+        <div class="stats">
+          <div class="stat"><b>${op.operation_status === "Y" ? "Open" : "Inactive"}</b><span>License status</span></div>
+          <div class="stat"><b>${escapeHtml(op.total_capacity || "—")}</b><span>Licensed capacity</span></div>
+          <div class="stat"><b>${escapeHtml(op.licensed_to_serve_ages || "—")}</b><span>Ages</span></div>
+          <div class="stat"><b>${escapeHtml(op.total_inspections || "0")}</b><span>Inspections on file</span></div>
+          <div class="stat"><b>${escapeHtml(op.type_of_issuance || "—")}</b><span>Issuance</span></div>
+          <div class="stat"><b>${fmtDate(op.issuance_date)}</b><span>Issued</span></div>
+        </div>
+        <p class="muted">Hours ${escapeHtml(op.hours_of_operation || "—")} · ${escapeHtml(op.days_of_operation || "")}
+          · Adverse action: ${escapeHtml(op.adverse_action || "—")}
+          · Corrective action: ${escapeHtml(op.corrective_action || "—")}</p>
+        <p><a href="${hhsc}" target="_blank" rel="noopener">HHSC Child Care Search</a> · <a href="${portal}" target="_blank" rel="noopener">Raw operation JSON</a></p>
+
+        <div class="section">
+          <h2>Inspections</h2>
+          ${acts.length ? acts.map((a) => `
+            <div class="row">
+              <strong>${fmtDate(a.activity_date)} · ${escapeHtml(a.activity_type || "Activity")}</strong>
+              <span class="muted">Violation found: ${escapeHtml(a.violation_found || "—")}</span>
+            </div>`).join("") : `<p class="muted">No inspection rows in the public file for this operation.</p>`}
+        </div>
+
+        <div class="section">
+          <h2>Deficiencies</h2>
+          ${defs.length ? defs.map((d) => `
+            <div class="row">
+              <span class="${riskClass(d.standard_risk_level)}">${escapeHtml(d.standard_risk_level || "n/a")}</span>
+              <strong>${escapeHtml(d.standard_number_description || "Standard")}</strong>
+              <p>${escapeHtml(d.narrative || "")}</p>
+              <div class="muted">Corrected at inspection: ${escapeHtml(d.corrected_at_inspection || "—")}
+                · Corrected ${fmtDate(d.corrected_date)}
+                · Verified ${fmtDate(d.date_correction_verified)}</div>
+            </div>`).join("") : `<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>`}
+        </div>
+      `;
+    } catch (e) {
+      app.innerHTML = `<div class="err">${escapeHtml(e.message)}</div><p><a href="index.html">Back to search</a></p>`;
+    }
+  </script>
+</body>
+</html>
