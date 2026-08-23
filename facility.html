@@ -233,6 +233,27 @@ h2.page-title, .page h1 {
 .risk.High { color: var(--stamp); }
 .risk.Medium.High, .risk.mh { color: var(--warn); }
 
+
+.g-box {
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.g-score {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.review p { margin: 6px 0 0; color: var(--ink-2); }
+.stars { letter-spacing: 0.06em; color: var(--gold); }
+
 .prose { max-width: 42rem; }
 .prose h1 { font-size: 2.4rem; margin-bottom: 12px; }
 .prose h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.35rem; margin-top: 32px; }
@@ -404,6 +425,93 @@ function cardHTML(op) {
   </a>`;
 }
 
+
+const GOOGLE_MAPS_KEY = "AIzaSyBBYSljZW6mczj-ByrBSHP7Wvfyfkvh6gE"; reviews are never stored
+
+function stars(n) {
+  const r = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+  return `<span class="stars">${"★".repeat(r)}${"☆".repeat(5 - r)}</span>`;
+}
+
+function reviewText(rev) {
+  if (!rev) return "";
+  if (typeof rev.text === "string") return rev.text;
+  if (rev.text && typeof rev.text.text === "string") return rev.text.text;
+  return "";
+}
+
+function loadMapsJs(key) {
+  if (window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&v=weekly";
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("Google Maps failed to load"));
+    document.head.appendChild(s);
+  });
+}
+
+async function loadGoogleReviews(op, mount) {
+  const key = GOOGLE_MAPS_KEY;
+  mount.innerHTML = `<h2>Google reviews</h2><p class="muted">Pulling live from Google…</p>`;
+  if (!key) {
+    mount.innerHTML = `<h2>Google reviews</h2><p class="muted">Google reviews are not wired yet.</p>`;
+    return;
+  }
+  try {
+    await loadMapsJs(key);
+    const { Place } = await google.maps.importLibrary("places");
+    const zip = zipOf(op);
+    const query = [op.operation_name, op.city, "TX", zip, "child care"].filter(Boolean).join(" ");
+    const { places } = await Place.searchByText({
+      textQuery: query,
+      fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"],
+      maxResultCount: 1,
+    });
+    const place = places && places[0];
+    if (!place) {
+      mount.innerHTML = `<h2>Google reviews</h2><p class="muted">No Google listing matched this name and city.</p>`;
+      return;
+    }
+    if (typeof place.fetchFields === "function") {
+      await place.fetchFields({
+        fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"],
+      });
+    }
+    const name = place.displayName || "";
+    const addr = place.formattedAddress || "";
+    const rating = place.rating;
+    const count = place.userRatingCount;
+    const maps = place.googleMapsURI || "";
+    const reviews = Array.isArray(place.reviews) ? place.reviews.slice(0, 5) : [];
+    const cards = reviews.map((rev) => {
+      const author = (rev.authorAttribution && rev.authorAttribution.displayName) || "Google user";
+      const text = reviewText(rev);
+      const when = rev.relativePublishTimeDescription || "";
+      return `<div class="row review">
+        <strong>${escapeHtml(author)} ${stars(rev.rating)} <span class="muted">${escapeHtml(when)}</span></strong>
+        <p>${escapeHtml(text)}</p>
+      </div>`;
+    }).join("");
+    mount.innerHTML = `
+      <h2>Google reviews</h2>
+      <p class="muted">Live from Google for this page load. Not stored.</p>
+      <div class="g-box">
+        <div>
+          <b class="g-score">${rating != null ? Number(rating).toFixed(1) : "—"}</b>
+          <div>${stars(rating)} ${count != null ? escapeHtml(String(count)) + " reviews" : ""}</div>
+          <div class="muted">${escapeHtml(name)}${addr ? " · " + escapeHtml(addr) : ""}</div>
+        </div>
+        ${maps ? `<a class="source-link" href="${maps}" target="_blank" rel="noopener">See all on Google</a>` : ""}
+      </div>
+      ${cards || `<p class="muted">Google returned a listing but no review text.</p>`}
+      <p class="muted">Reviews from Google</p>`;
+  } catch (e) {
+    mount.innerHTML = `<h2>Google reviews</h2><p class="muted">Could not load Google reviews right now.</p>`;
+  }
+}
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;",
@@ -489,6 +597,11 @@ function escapeHtml(s) {
             </div>`).join("") : `<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>`}
         </div>
       `;
+      const gMount = document.createElement("div");
+      gMount.className = "section";
+      gMount.id = "google-reviews";
+      app.appendChild(gMount);
+      loadGoogleReviews(op, gMount);
     } catch (e) {
       app.innerHTML = `<div class="err">${escapeHtml(e.message)}</div><p><a href="index.html">Back to search</a></p>`;
     }
