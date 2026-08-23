@@ -236,24 +236,36 @@ h2.page-title, .page h1 {
 
 
 .g-box {
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 14px 16px;
-  margin-bottom: 12px;
+  background: #fff;
+  border: 3px solid #4285F4;
+  padding: 18px 20px;
+  margin: 8px 0 16px;
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  align-items: flex-end;
+  gap: 18px;
+  align-items: center;
   flex-wrap: wrap;
+}
+.g-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4285F4;
+  margin-bottom: 4px;
 }
 .g-score {
   font-family: "Fraunces", Georgia, serif;
-  font-size: 2rem;
-  letter-spacing: -0.03em;
-  line-height: 1;
+  font-size: 3.1rem;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: #202124;
 }
+.g-box .stars { letter-spacing: 0.08em; color: #F4B400; font-size: 1.45rem; }
+.g-box .g-count { font-size: 1.05rem; font-weight: 600; color: #202124; }
+.g-box .source-link { color: #1a73e8; font-weight: 700; text-underline-offset: 3px; }
 .review p { margin: 6px 0 0; color: var(--ink-2); }
-.stars { letter-spacing: 0.06em; color: var(--gold); }
+.stars { letter-spacing: 0.06em; color: #F4B400; }
 
 .prose { max-width: 42rem; }
 .prose h1 { font-size: 2.4rem; margin-bottom: 12px; }
@@ -565,10 +577,10 @@ function gradeOf(op, defs, acts, google) {
       mount.innerHTML =
         "<h2>Google reviews</h2>" +
         "<p class=\"muted\">Live from Google for this page load. Not stored.</p>" +
-        '<div class="g-box"><div><b class="g-score">' +
-        (rating != null ? Number(rating).toFixed(1) : "—") + "</b><div>" + stars(rating) + " " +
-        (count != null ? escapeHtml(String(count)) + " reviews" : "") +
-        '</div><div class="muted">' + escapeHtml(name) + (addr ? " · " + escapeHtml(addr) : "") +
+        '<div class="g-box"><div><div class="g-kicker">Google rating</div><b class="g-score">' +
+        (rating != null ? Number(rating).toFixed(1) : "—") + "</b><div>" + stars(rating) +
+        ' <span class="g-count">' + (count != null ? escapeHtml(String(count)) + " reviews" : "") +
+        '</span></div><div class="muted">' + escapeHtml(name) + (addr ? " · " + escapeHtml(addr) : "") +
         "</div></div>" +
         (maps ? '<a class="source-link" href="' + maps + '" target="_blank" rel="noopener">See all on Google</a>' : "") +
         "</div>" +

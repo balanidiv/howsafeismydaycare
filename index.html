@@ -130,8 +130,9 @@ h1 {
 .grid { display: grid; gap: 12px; padding-bottom: 64px; }
 .card {
   display: grid;
-  grid-template-columns: 88px 1fr;
+  grid-template-columns: 88px 1fr auto;
   gap: 16px;
+  align-items: start;
   background: #fffdf8;
   border: 1px solid var(--rule);
   padding: 16px 18px;
@@ -148,7 +149,32 @@ h1 {
   letter-spacing: -0.02em;
 }
 .meta { color: var(--ink-2); font-size: 0.92rem; }
-.pill.g-rate { text-transform: none; letter-spacing: 0; color: var(--gold); }
+.g-badge {
+  min-width: 96px;
+  text-align: center;
+  background: #fff;
+  border: 2px solid #4285F4;
+  padding: 8px 10px 10px;
+  color: #1a1a1a;
+}
+.g-badge .g-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4285F4;
+}
+.g-badge .g-num {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.g-badge .g-stars { color: #F4B400; font-size: 1.05rem; letter-spacing: 0.04em; }
+.g-badge .g-n { font-size: 0.75rem; color: #3c4043; margin-top: 2px; }
+.g-badge.is-empty { border-color: var(--rule); color: var(--ink-2); }
+.g-badge.is-empty .g-kicker { color: var(--ink-2); }
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .pill {
   font-size: 0.75rem;
@@ -247,7 +273,9 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
 @media (max-width: 640px) {
   .search { grid-template-columns: 1fr; }
-  .card, .title-row { grid-template-columns: 1fr; }
+  .card { grid-template-columns: 88px 1fr; }
+  .title-row { grid-template-columns: 1fr; }
+  .g-badge { justify-self: start; }
   .grade { width: 68px; height: 68px; }
 }
 
@@ -495,9 +523,9 @@ function cardHTML(op, hist) {
         <span class="pill">${op.total_inspections || 0} inspections</span>
         <span class="pill">Last 24 months</span>
         <span class="pill">Safety ${g.safety} · Visits ${g.inspect}</span>
-        <span class="pill g-rate" data-google-card="${escapeHtml(id)}">Google …</span>
       </div>
     </div>
+    <aside class="g-badge" data-google-card="${escapeHtml(id)}"><div class="g-kicker">Google</div><div class="g-num">…</div></aside>
   </a>`;
 }
 
@@ -530,7 +558,7 @@ function fillGoogleRatings(ops) {
       if (i >= nodes.length) return;
       var node = nodes[i++];
       var op = byId[node.getAttribute("data-google-card")];
-      if (!op) { node.textContent = "Google —"; return next(); }
+      if (!op) { paintGoogleBadge(node, null, null); return next(); }
       var q = [op.operation_name, op.city, "TX", zipOf(op), "child care"].filter(Boolean).join(" ");
       Place.searchByText({
         textQuery: q,
@@ -539,20 +567,34 @@ function fillGoogleRatings(ops) {
       }).then(function (res) {
         var place = res && res.places && res.places[0];
         if (place && place.rating != null) {
-          var n = place.userRatingCount;
-          node.textContent = "Google " + Number(place.rating).toFixed(1) + (n != null ? " (" + n + ")" : "");
+          paintGoogleBadge(node, place.rating, place.userRatingCount);
         } else {
-          node.textContent = "Google —";
+          paintGoogleBadge(node, null, null);
         }
       }).catch(function () {
-        node.textContent = "Google —";
+        paintGoogleBadge(node, null, null);
       }).then(next);
     }
     next();
   }).catch(function () {
-    document.querySelectorAll("[data-google-card]").forEach(function (n) { n.textContent = "Google —"; });
+    document.querySelectorAll("[data-google-card]").forEach(function (n) { paintGoogleBadge(n, null, null); });
   });
 }
+function paintGoogleBadge(node, rating, count) {
+  if (!node) return;
+  if (rating == null) {
+    node.classList.add("is-empty");
+    node.innerHTML = '<div class="g-kicker">Google</div><div class="g-num">—</div><div class="g-n">No listing</div>';
+    return;
+  }
+  node.classList.remove("is-empty");
+  var r = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+  var stars = "★".repeat(r) + "☆".repeat(5 - r);
+  var n = (count != null) ? (count + " reviews") : "";
+  node.innerHTML = '<div class="g-kicker">Google</div><div class="g-num">' + Number(rating).toFixed(1) +
+    '</div><div class="g-stars">' + stars + '</div><div class="g-n">' + n + "</div>";
+}
+
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
