@@ -287,7 +287,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </nav>
     </header>
     <div class="page" id="app">
-      <p class="muted">Loading official record…</p>
+      <p class="muted" id="load-status">Loading official record from Texas HHSC…</p>
     </div>
   </div>
   <footer>
@@ -314,6 +314,11 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
   window.addEventListener("unhandledrejection", function (ev) {
     if (!rendered) showError((ev && ev.reason && ev.reason.message) || "Request failed.");
   });
+  setTimeout(function () {
+    if (rendered) return;
+    var el = document.getElementById("load-status");
+    if (el) el.textContent = "Still talking to Texas HHSC. This can take a few seconds on a cold pull…";
+  }, 2000);
   setTimeout(function () {
     if (!rendered) showError("Texas open data is taking too long. Refresh to try again.");
   }, 10000);
