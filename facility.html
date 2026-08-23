@@ -589,10 +589,36 @@ function gradeOf(op, defs, acts, google) {
     var hhscSearch = "https://childcare.hhs.texas.gov/Public/childcaresearch/";
     document.title = (op.operation_name || "Facility") + " · How Safe Is My Daycare?";
 
+    function shortViolation(d) {
+      var s = String((d && d.standard_number_description) || "");
+      var cut = s.indexOf(" - ");
+      if (cut !== -1) s = s.slice(cut + 3);
+      var narr = String((d && d.narrative) || "").replace(/\s+/g, " ").trim();
+      if (narr && narr.length > 110) narr = narr.slice(0, 107) + "…";
+      if (s && narr) return s + " · " + narr;
+      return s || narr || "Violation on file";
+    }
+    var defsByAct = {};
+    (defs || []).forEach(function (d) {
+      var aid = String(d.activity_id || "");
+      if (!aid) return;
+      if (!defsByAct[aid]) defsByAct[aid] = [];
+      defsByAct[aid].push(d);
+    });
     var inspectHtml = acts.length ? acts.map(function (a) {
+      var yes = String(a.violation_found || "").toUpperCase();
+      yes = yes === "Y" || yes === "YES";
+      var extra = "";
+      if (yes) {
+        var related = defsByAct[String(a.activity_id || "")] || [];
+        extra = related.length
+          ? related.slice(0, 2).map(shortViolation).join(" · ")
+          : "See deficiencies below.";
+        extra = '<p class="muted">' + escapeHtml(extra) + "</p>";
+      }
       return '<div class="row"><strong>' + escapeHtml(fmtDate(a.activity_date)) + " · " +
         escapeHtml(a.activity_type || "Activity") + '</strong><span class="muted">Violation found: ' +
-        escapeHtml(a.violation_found || "—") + "</span></div>";
+        escapeHtml(a.violation_found || "—") + "</span>" + extra + "</div>";
     }).join("") : '<p class="muted">No inspection rows in the public file for this operation.</p>';
 
     var defHtml = defs.length ? defs.map(function (d) {

@@ -148,6 +148,7 @@ h1 {
   letter-spacing: -0.02em;
 }
 .meta { color: var(--ink-2); font-size: 0.92rem; }
+.pill.g-rate { text-transform: none; letter-spacing: 0; color: var(--gold); }
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .pill {
   font-size: 0.75rem;
@@ -494,9 +495,63 @@ function cardHTML(op, hist) {
         <span class="pill">${op.total_inspections || 0} inspections</span>
         <span class="pill">Last 24 months</span>
         <span class="pill">Safety ${g.safety} · Visits ${g.inspect}</span>
+        <span class="pill g-rate" data-google-card="${escapeHtml(id)}">Google …</span>
       </div>
     </div>
   </a>`;
+}
+
+
+const GOOGLE_MAPS_KEY = "AIzaSyBBYSljZW6mczj-ByrBSHP7Wvfyfkvh6gE";
+
+function loadMapsJs(mapsKey) {
+  if (window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
+  return new Promise(function (resolve, reject) {
+    var s = document.createElement("script");
+    s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(mapsKey) + "&v=weekly";
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = function () { reject(new Error("Google Maps failed to load")); };
+    document.head.appendChild(s);
+  });
+}
+
+function fillGoogleRatings(ops) {
+  if (!GOOGLE_MAPS_KEY || !ops || !ops.length) return;
+  var byId = {};
+  ops.forEach(function (op) { byId[String(op.operation_id || "")] = op; });
+  loadMapsJs(GOOGLE_MAPS_KEY).then(function () {
+    return google.maps.importLibrary("places");
+  }).then(function (lib) {
+    var Place = lib.Place;
+    var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-google-card]"));
+    var i = 0;
+    function next() {
+      if (i >= nodes.length) return;
+      var node = nodes[i++];
+      var op = byId[node.getAttribute("data-google-card")];
+      if (!op) { node.textContent = "Google —"; return next(); }
+      var q = [op.operation_name, op.city, "TX", zipOf(op), "child care"].filter(Boolean).join(" ");
+      Place.searchByText({
+        textQuery: q,
+        fields: ["rating", "userRatingCount", "displayName"],
+        maxResultCount: 1
+      }).then(function (res) {
+        var place = res && res.places && res.places[0];
+        if (place && place.rating != null) {
+          var n = place.userRatingCount;
+          node.textContent = "Google " + Number(place.rating).toFixed(1) + (n != null ? " (" + n + ")" : "");
+        } else {
+          node.textContent = "Google —";
+        }
+      }).catch(function () {
+        node.textContent = "Google —";
+      }).then(next);
+    }
+    next();
+  }).catch(function () {
+    document.querySelectorAll("[data-google-card]").forEach(function (n) { n.textContent = "Google —"; });
+  });
 }
 
 function escapeHtml(s) {
@@ -530,6 +585,7 @@ function escapeHtml(s) {
         status.textContent = "Scoring last 24 months of HHSC inspections…";
         const hist = await loadHistory(rows.map((r) => r.operation_id));
         results.innerHTML = rows.map((op) => cardHTML(op, hist)).join("");
+        fillGoogleRatings(rows);
       } catch (e) {
         status.textContent = "";
         err.innerHTML = `<div class="err">${e.message}. The Texas open-data API may be rate-limiting. Try again in a moment.</div>`;
