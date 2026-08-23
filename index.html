@@ -265,7 +265,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     <section class="hero">
       <div class="kicker">Texas · official public records</div>
       <h1>Inspection history, without the state-portal scavenger hunt.</h1>
-      <p class="lede">Search a licensed Texas daycare by name, city, or ZIP. Records come live from <a href="https://childcare.hhs.texas.gov/Public/childcaresearch/" target="_blank" rel="noopener">Search Texas Child Care</a> (HHSC) via the state’s open data. Grades are derived, not an official state rating.</p>
+      <p class="lede">Search a licensed Texas daycare by name, city, or ZIP. Records come live from <a href="https://childcare.hhs.texas.gov/Public/childcaresearch/" target="_blank" rel="noopener">Search Texas Child Care</a> (HHSC) via the state’s open data. Grades use the last 24 months of HHSC findings and inspections, not a lifetime pile-on. Not an official state rating.</p>
       <form class="search" id="form">
         <input id="q" type="search" placeholder="Try Austin, 78704, or a center name" autocomplete="off" />
         <button type="submit">Search records</button>
@@ -300,25 +300,75 @@ const DAYCARE_TYPES = [
 ];
 const TYPE_SQL = DAYCARE_TYPES.map((t) => `'${t}'`).join(",");
 
-function gradeOf(op) {
-  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown" };
-  const closed =
-    String(op.operation_status).toUpperCase() !== "Y" ||
-    String(op.temporarily_closed).toUpperCase() === "YES";
-  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive" };
 
-  let score = 100;
-  const n = (k) => Number(op[k] || 0);
-  score -= n("deficiency_high") * 12;
-  score -= n("deficiency_medium_high") * 7;
-  score -= n("deficiency_medium") * 4;
-  score -= n("deficiency_medium_low") * 2;
-  score -= n("deficiency_low") * 1;
-  if (String(op.adverse_action).toUpperCase() === "YES") score -= 20;
-  if (String(op.corrective_action).toUpperCase() === "YES") score -= 10;
-  score = Math.max(0, Math.min(100, score));
-  const letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  return { letter, score, cls: `g-${letter}`, label: `${score} / 100` };
+function daysAgo(raw) {
+  if (!raw) return null;
+  var d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function defWhen(d) {
+  return (d && (d.date_correction_verified || d.corrected_date)) || null;
+}
+function isUncorrected(d) {
+  return !(d && (d.corrected_date || d.date_correction_verified));
+}
+function riskHit(level, ageDays) {
+  var l = String(level || "");
+  var full = 0;
+  if (l === "High") full = 8;
+  else if (l === "Medium High" || l.indexOf("Medium High") === 0) full = 5;
+  else if (l === "Medium") full = 3;
+  else if (l === "Medium Low" || l.indexOf("Medium Low") === 0) full = 2;
+  else if (l === "Low") full = 1;
+  if (!full) return 0;
+  if (ageDays == null) return full;
+  if (ageDays <= 365) return full;
+  if (ageDays <= 730) return full / 2;
+  return 0;
+}
+function reviewMod(google) {
+  if (!google || google.rating == null || !(google.count >= 8)) return 0;
+  if (google.rating >= 4.5 && google.count >= 10) return 5;
+  if (google.rating >= 4.0) return 3;
+  if (google.rating < 3.0) return -4;
+  return 0;
+}
+function gradeOf(op, defs, acts, google) {
+  defs = defs || [];
+  acts = acts || [];
+  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, reviews: 0, capped: false };
+  var closed = String(op.operation_status).toUpperCase() !== "Y" || String(op.temporarily_closed).toUpperCase() === "YES";
+  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, reviews: 0, capped: false };
+  var safety = 0, uncorrectedHigh12 = false, i;
+  for (i = 0; i < defs.length; i++) {
+    var d = defs[i];
+    var age = daysAgo(defWhen(d));
+    safety -= riskHit(d.standard_risk_level, age);
+    if (String(d.standard_risk_level) === "High" && isUncorrected(d) && (age == null || age <= 365)) uncorrectedHigh12 = true;
+  }
+  var inspect = 0, clean12 = 0, any24 = false;
+  for (i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    var aage = daysAgo(a.activity_date);
+    if (aage == null || aage > 730) continue;
+    any24 = true;
+    var yes = String(a.violation_found || "").toUpperCase();
+    yes = yes === "Y" || yes === "YES";
+    if (aage <= 365) {
+      if (yes) inspect -= 2;
+      else if (String(a.activity_type || "").toUpperCase() === "INSPECTION") clean12 += 1;
+    } else if (yes) inspect -= 1;
+  }
+  inspect += Math.min(5, clean12);
+  if (!any24) inspect -= 5;
+  var reviews = reviewMod(google);
+  var raw = 100 + safety + inspect + reviews;
+  var capped = false;
+  if (uncorrectedHigh12 && raw > 79) { raw = 79; capped = true; }
+  var score = Math.max(0, Math.min(100, Math.round(raw)));
+  var letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, reviews: reviews, capped: capped };
 }
 
 function zipOf(op) {
@@ -392,15 +442,47 @@ async function getDeficiencies(id) {
   return res.json();
 }
 
+
+function safeId(id) { return String(id || "").replace(/[^0-9A-Za-z-]/g, ""); }
+function groupByOp(rows) {
+  var out = {};
+  (rows || []).forEach(function (r) {
+    var id = String(r.operation_id || "");
+    if (!out[id]) out[id] = [];
+    out[id].push(r);
+  });
+  return out;
+}
+async function loadHistory(ids) {
+  var safe = (ids || []).map(safeId).filter(Boolean);
+  if (!safe.length) return { defs: {}, acts: {} };
+  var inn = safe.map(function (id) { return "'" + id + "'"; }).join(",");
+  async function grab(base, extra) {
+    var url = new URL(base);
+    url.searchParams.set("$where", "operation_id in (" + inn + ")");
+    url.searchParams.set("$limit", "2000");
+    Object.keys(extra || {}).forEach(function (k) { url.searchParams.set(k, extra[k]); });
+    var res = await fetch(url);
+    if (!res.ok) return [];
+    return res.json();
+  }
+  const [defs, acts] = await Promise.all([
+    grab(NC, {}),
+    grab(ACT, { "$order": "activity_date DESC" }),
+  ]);
+  return { defs: groupByOp(defs), acts: groupByOp(acts) };
+}
+
 function gradeEl(g) {
   return `<div class="grade ${g.cls}" title="${g.label}"><div>${g.letter}<small>${g.score == null ? g.label : g.score}</small></div></div>`;
 }
 
-function cardHTML(op) {
-  const g = gradeOf(op);
+function cardHTML(op, hist) {
+  hist = hist || { defs: {}, acts: {} };
+  const id = String(op.operation_id || "");
+  const g = gradeOf(op, hist.defs[id] || [], hist.acts[id] || [], null);
   const zip = zipOf(op);
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
-  const defs = Number(op.deficiency_high || 0) + Number(op.deficiency_medium_high || 0);
   return `<a class="card" href="${href}">
     ${gradeEl(g)}
     <div>
@@ -410,7 +492,8 @@ function cardHTML(op) {
         <span class="pill">${op.operation_status === "Y" ? "Open" : "Inactive"}</span>
         <span class="pill">Cap. ${op.total_capacity || "—"}</span>
         <span class="pill">${op.total_inspections || 0} inspections</span>
-        <span class="pill">${defs} high / med-high findings</span>
+        <span class="pill">Last 24 months</span>
+        <span class="pill">Safety ${g.safety} · Visits ${g.inspect}</span>
       </div>
     </div>
   </a>`;
@@ -442,9 +525,11 @@ function escapeHtml(s) {
         const rows = await searchFacilities(q);
         const label = q && q.trim() ? `“${q.trim()}”` : "Austin (default)";
         status.textContent = rows.length
-          ? `${rows.length} licensed child-care operations for ${label}.`
+          ? `${rows.length} licensed child-care operations for ${label}. Grades use the last 24 months, not lifetime counts.`
           : `No licensed child-care operations matched ${label}.`;
-        results.innerHTML = rows.map(cardHTML).join("");
+        status.textContent = "Scoring last 24 months of HHSC inspections…";
+        const hist = await loadHistory(rows.map((r) => r.operation_id));
+        results.innerHTML = rows.map((op) => cardHTML(op, hist)).join("");
       } catch (e) {
         status.textContent = "";
         err.innerHTML = `<div class="err">${e.message}. The Texas open-data API may be rate-limiting. Try again in a moment.</div>`;

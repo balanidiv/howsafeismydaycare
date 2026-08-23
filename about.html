@@ -274,24 +274,30 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <p>Included operation types: Licensed Center, Licensed Child-Care Home, Registered Child-Care Home, Listed Family Home. Excluded: general residential operations and child-placing agencies.</p>
 
       <h2>How the letter grade is computed</h2>
-      <p>This is <em>not</em> an official HHSC rating. It is a transparent score so you can compare files quickly.</p>
+      <p>This is <em>not</em> an official HHSC rating. It is a parent-perspective score for Texas files only. Lifetime deficiency totals are not used. Search cards and facility pages share the same HHSC + inspection math. Google only adjusts the facility page.</p>
       <table>
         <thead><tr><th>Signal</th><th>Effect</th></tr></thead>
         <tbody>
           <tr><td>Start</td><td>100</td></tr>
-          <tr><td>Each High deficiency</td><td>−12</td></tr>
-          <tr><td>Each Medium High</td><td>−7</td></tr>
-          <tr><td>Each Medium</td><td>−4</td></tr>
-          <tr><td>Each Medium Low</td><td>−2</td></tr>
-          <tr><td>Each Low</td><td>−1</td></tr>
-          <tr><td>Adverse action</td><td>−20</td></tr>
-          <tr><td>Corrective action</td><td>−10</td></tr>
-          <tr><td>Inactive or temporarily closed</td><td>No letter — marked closed</td></tr>
+          <tr><td>High in last 12 months</td><td>−8 each</td></tr>
+          <tr><td>Medium High in last 12 months</td><td>−5 each</td></tr>
+          <tr><td>Medium / Medium Low / Low in last 12 months</td><td>−3 / −2 / −1</td></tr>
+          <tr><td>Same findings 12–24 months old</td><td>Half weight</td></tr>
+          <tr><td>Older than 24 months</td><td>Ignored for the letter</td></tr>
+          <tr><td>Inspection with a violation, last 12 months</td><td>−2</td></tr>
+          <tr><td>Clean inspection, last 12 months</td><td>+1 each, max +5</td></tr>
+          <tr><td>Violation 12–24 months ago</td><td>−1</td></tr>
+          <tr><td>No inspections in 24 months</td><td>−5</td></tr>
+          <tr><td>Google ≥ 4.5 with 10+ reviews</td><td>+5 on the facility page only</td></tr>
+          <tr><td>Google ≥ 4.0 with 8+ reviews</td><td>+3 on the facility page only</td></tr>
+          <tr><td>Google under 3.0 with 8+ reviews</td><td>−4 on the facility page only</td></tr>
+          <tr><td>Uncorrected High in the last 12 months</td><td>Cap at 79 (C). Reviews cannot hide it.</td></tr>
+          <tr><td>Inactive or temporarily closed</td><td>No letter</td></tr>
         </tbody>
       </table>
-      <p>A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below. Recent inspections are listed in full so you can ignore the letter and read the file.</p>
+      <p>A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below. Each facility page shows the mix: safety, inspections, reviews.</p>
       <h2>Google reviews</h2>
-      <p>Each facility page also asks Google for that listing’s current rating and up to five reviews when you open it. Those reviews are not saved here. They are parent sentiment, not an inspection record, and they are not part of the letter grade.</p>
+      <p>Each facility page asks Google for that listing’s current rating and up to five reviews when you open it. Those reviews are not saved. They are a small modifier, not a substitute for the HHSC file. Search results grade without Google.</p>
 
       <h2>Limits</h2>
       <ul>
