@@ -35,6 +35,13 @@ body {
 }
 a { color: inherit; }
 a:hover { color: var(--stamp); }
+.source-box {
+  background: #fffdf8;
+  border: 1px solid var(--rule);
+  padding: 12px 14px;
+  margin: 16px 0 10px;
+}
+.source-link { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
 .wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
 
@@ -431,7 +438,8 @@ function escapeHtml(s) {
       document.title = `${op.operation_name} · How Safe Is My Daycare?`;
       const zip = zipOf(op);
       const portal = `https://data.texas.gov/resource/bc5r-88dy.json?$where=operation_id='${id}'`;
-      const hhsc = "https://childcare.hhs.texas.gov/Public/ChildCareSearch";
+      const hhsc = `https://childcare.hhs.texas.gov/Public/InspectionAndComplianceHistory?operationId=${id}`;
+      const hhscSearch = "https://childcare.hhs.texas.gov/Public/childcaresearch/";
 
       app.innerHTML = `
         <div class="crumb"><a href="index.html">Search</a> / ${escapeHtml(op.city || "Texas")}</div>
@@ -454,7 +462,9 @@ function escapeHtml(s) {
         <p class="muted">Hours ${escapeHtml(op.hours_of_operation || "—")} · ${escapeHtml(op.days_of_operation || "")}
           · Adverse action: ${escapeHtml(op.adverse_action || "—")}
           · Corrective action: ${escapeHtml(op.corrective_action || "—")}</p>
-        <p><a href="${hhsc}" target="_blank" rel="noopener">HHSC Child Care Search</a> · <a href="${portal}" target="_blank" rel="noopener">Raw operation JSON</a></p>
+        <p class="source-box"><a class="source-link" href="${hhsc}" target="_blank" rel="noopener">Official Texas record — Search Texas Child Care</a>
+          <span class="muted"> Same HHSC inspection and compliance history this page is built from.</span></p>
+        <p><a href="${hhscSearch}" target="_blank" rel="noopener">HHSC Child Care Search</a> · <a href="${portal}" target="_blank" rel="noopener">Raw operation JSON</a></p>
 
         <div class="section">
           <h2>Inspections</h2>
