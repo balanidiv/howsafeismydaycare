@@ -297,315 +297,291 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     </div>
   </footer>
   <script>
-const SODA = "https://data.texas.gov/resource";
-const OPS = `${SODA}/bc5r-88dy.json`;
-const ACT = `${SODA}/m5q4-3y3d.json`;
-const NC = `${SODA}/tqgd-mf4x.json`;
-const DAYCARE_TYPES = [
-  "Licensed Center",
-  "Licensed Child-Care Home",
-  "Registered Child-Care Home",
-  "Listed Family Home",
-];
-const TYPE_SQL = DAYCARE_TYPES.map((t) => `'${t}'`).join(",");
+(function () {
+  var app = document.getElementById("app");
+  var rendered = false;
 
-function gradeOf(op) {
-  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown" };
-  const closed =
-    String(op.operation_status).toUpperCase() !== "Y" ||
-    String(op.temporarily_closed).toUpperCase() === "YES";
-  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive" };
-
-  let score = 100;
-  const n = (k) => Number(op[k] || 0);
-  score -= n("deficiency_high") * 12;
-  score -= n("deficiency_medium_high") * 7;
-  score -= n("deficiency_medium") * 4;
-  score -= n("deficiency_medium_low") * 2;
-  score -= n("deficiency_low") * 1;
-  if (String(op.adverse_action).toUpperCase() === "YES") score -= 20;
-  if (String(op.corrective_action).toUpperCase() === "YES") score -= 10;
-  score = Math.max(0, Math.min(100, score));
-  const letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  return { letter, score, cls: `g-${letter}`, label: `${score} / 100` };
-}
-
-function zipOf(op) {
-  return String(op.zipcode || "").replace(/\s+/g, " ").trim().slice(0, 5);
-}
-
-function fmtDate(iso) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-}
-
-function sodaWhere(expr, extra = "") {
-  const url = new URL(OPS);
-  url.searchParams.set("$where", expr);
-  url.searchParams.set("$limit", "40");
-  url.searchParams.set("$order", "deficiency_high DESC, operation_name ASC");
-  if (extra) url.searchParams.set("$select", extra);
-  return url.toString();
-}
-
-async function searchFacilities(q) {
-  const raw = (q || "").trim();
-  const type = `operation_type in (${TYPE_SQL})`;
-  let where;
-  if (!raw) {
-    where = `${type} AND upper(city)='AUSTIN' AND operation_status='Y'`;
-  } else if (/^\d{5}$/.test(raw)) {
-    where = `${type} AND starts_with(zipcode,'${raw}')`;
-  } else if (/^[A-Za-z .'-]+$/.test(raw) && raw.length < 28) {
-    const city = raw.replace(/'/g, "''").toUpperCase();
-    const name = city;
-    where = `${type} AND (upper(city)='${city}' OR upper(operation_name) like '%${name}%')`;
-  } else {
-    const safe = raw.replace(/'/g, "''").toUpperCase();
-    where = `${type} AND (upper(operation_name) like '%${safe}%' OR upper(city) like '%${safe}%' OR zipcode like '${safe}%')`;
+  function showError(msg) {
+    rendered = true;
+    if (!app) return;
+    app.innerHTML = '<div class="err"></div><p><a href="index.html">Back to search</a></p>';
+    app.querySelector(".err").textContent = String(msg || "Could not load this record.");
   }
-  const res = await fetch(sodaWhere(where));
-  if (!res.ok) throw new Error(`Texas open data returned ${res.status}`);
-  return res.json();
-}
 
-async function getFacility(id) {
-  const url = new URL(OPS);
-  url.searchParams.set("$where", `operation_id='${id}'`);
-  url.searchParams.set("$limit", "1");
-  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
-  if (!res.ok) throw new Error(`Texas open data returned ${res.status}`);
-  const rows = await res.json();
-  return rows[0] || null;
-}
-
-async function getInspections(id) {
-  const url = new URL(ACT);
-  url.searchParams.set("$where", `operation_id='${id}'`);
-  url.searchParams.set("$order", "activity_date DESC");
-  url.searchParams.set("$limit", "50");
-  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
-  if (!res.ok) return [];
-  return res.json();
-}
-
-async function getDeficiencies(id) {
-  const url = new URL(NC);
-  url.searchParams.set("$where", `operation_id='${id}'`);
-  url.searchParams.set("$order", "corrected_date DESC");
-  url.searchParams.set("$limit", "80");
-  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
-  if (!res.ok) return [];
-  return res.json();
-}
-
-function gradeEl(g) {
-  return `<div class="grade ${g.cls}" title="${g.label}"><div>${g.letter}<small>${g.score == null ? g.label : g.score}</small></div></div>`;
-}
-
-function cardHTML(op) {
-  const g = gradeOf(op);
-  const zip = zipOf(op);
-  const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
-  const defs = Number(op.deficiency_high || 0) + Number(op.deficiency_medium_high || 0);
-  return `<a class="card" href="${href}">
-    ${gradeEl(g)}
-    <div>
-      <h2>${escapeHtml(op.operation_name || "Unnamed facility")}</h2>
-      <div class="meta">${escapeHtml(op.city || "")}${zip ? ", TX " + zip : ""} · ${escapeHtml(op.operation_type || "")}</div>
-      <div class="pills">
-        <span class="pill">${op.operation_status === "Y" ? "Open" : "Inactive"}</span>
-        <span class="pill">Cap. ${op.total_capacity || "—"}</span>
-        <span class="pill">${op.total_inspections || 0} inspections</span>
-        <span class="pill">${defs} high / med-high findings</span>
-      </div>
-    </div>
-  </a>`;
-}
-
-
-const GOOGLE_MAPS_KEY = "AIzaSyBBYSljZW6mczj-ByrBSHP7Wvfyfkvh6gE";
-
-function stars(n) {
-  const r = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
-  return `<span class="stars">${"★".repeat(r)}${"☆".repeat(5 - r)}</span>`;
-}
-
-function reviewText(rev) {
-  if (!rev) return "";
-  if (typeof rev.text === "string") return rev.text;
-  if (rev.text && typeof rev.text.text === "string") return rev.text.text;
-  return "";
-}
-
-function loadMapsJs(key) {
-  if (window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&v=weekly";
-    s.async = true;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error("Google Maps failed to load"));
-    document.head.appendChild(s);
+  window.addEventListener("error", function (ev) {
+    if (!rendered) showError((ev && ev.message) || "Page script failed.");
   });
-}
+  window.addEventListener("unhandledrejection", function (ev) {
+    if (!rendered) showError((ev && ev.reason && ev.reason.message) || "Request failed.");
+  });
+  setTimeout(function () {
+    if (!rendered) showError("Texas open data is taking too long. Refresh to try again.");
+  }, 10000);
 
-async function loadGoogleReviews(op, mount) {
-  const key = GOOGLE_MAPS_KEY;
-  mount.innerHTML = `<h2>Google reviews</h2><p class="muted">Pulling live from Google…</p>`;
-  if (!key) {
-    mount.innerHTML = `<h2>Google reviews</h2><p class="muted">Google reviews are not wired yet.</p>`;
-    return;
-  }
-  try {
-    await loadMapsJs(key);
-    const { Place } = await google.maps.importLibrary("places");
-    const zip = zipOf(op);
-    const query = [op.operation_name, op.city, "TX", zip, "child care"].filter(Boolean).join(" ");
-    const { places } = await Place.searchByText({
-      textQuery: query,
-      fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"],
-      maxResultCount: 1,
+  var SODA = "https://data.texas.gov/resource";
+  var OPS = SODA + "/bc5r-88dy.json";
+  var ACT = SODA + "/m5q4-3y3d.json";
+  var NC = SODA + "/tqgd-mf4x.json";
+  var GOOGLE_MAPS_KEY = "AIzaSyBBYSljZW6mczj-ByrBSHP7Wvfyfkvh6gE";
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
     });
-    const place = places && places[0];
-    if (!place) {
-      mount.innerHTML = `<h2>Google reviews</h2><p class="muted">No Google listing matched this name and city.</p>`;
+  }
+
+  function zipOf(op) {
+    return String((op && op.zipcode) || "").replace(/\s+/g, " ").trim().slice(0, 5);
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function gradeOf(op) {
+    if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown" };
+    var closed =
+      String(op.operation_status).toUpperCase() !== "Y" ||
+      String(op.temporarily_closed).toUpperCase() === "YES";
+    if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive" };
+    var score = 100;
+    function n(k) { return Number(op[k] || 0); }
+    score -= n("deficiency_high") * 12;
+    score -= n("deficiency_medium_high") * 7;
+    score -= n("deficiency_medium") * 4;
+    score -= n("deficiency_medium_low") * 2;
+    score -= n("deficiency_low") * 1;
+    if (String(op.adverse_action).toUpperCase() === "YES") score -= 20;
+    if (String(op.corrective_action).toUpperCase() === "YES") score -= 10;
+    score = Math.max(0, Math.min(100, score));
+    var letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+    return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100" };
+  }
+
+  function gradeEl(g) {
+    return '<div class="grade ' + g.cls + '" title="' + escapeHtml(g.label) + '"><div>' +
+      escapeHtml(g.letter) + "<small>" + escapeHtml(g.score == null ? g.label : String(g.score)) +
+      "</small></div></div>";
+  }
+
+  function fetchJson(url, ms) {
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, ms || 12000);
+    return fetch(url, { signal: ctrl.signal }).then(function (res) {
+      if (!res.ok) throw new Error("Texas open data returned " + res.status);
+      return res.json();
+    }).catch(function (e) {
+      if (e && e.name === "AbortError") throw new Error("Texas open data timed out");
+      throw e;
+    }).finally(function () { clearTimeout(t); });
+  }
+
+  function sodaUrl(base, params) {
+    var url = new URL(base);
+    Object.keys(params).forEach(function (k) { url.searchParams.set(k, params[k]); });
+    return url.toString();
+  }
+
+  function safeId(id) {
+    return String(id || "").replace(/[^0-9A-Za-z-]/g, "");
+  }
+
+  function getFacility(id) {
+    var sid = safeId(id);
+    return fetchJson(sodaUrl(OPS, { operation_id: sid, "$limit": "1" }), 12000).then(function (rows) {
+      return (rows && rows[0]) || null;
+    });
+  }
+
+  function getInspections(id) {
+    return fetchJson(sodaUrl(ACT, {
+      "$where": "operation_id='" + safeId(id) + "'",
+      "$order": "activity_date DESC",
+      "$limit": "50"
+    }), 12000).catch(function () { return []; });
+  }
+
+  function getDeficiencies(id) {
+    return fetchJson(sodaUrl(NC, {
+      "$where": "operation_id='" + safeId(id) + "'",
+      "$order": "corrected_date DESC",
+      "$limit": "80"
+    }), 12000).catch(function () { return []; });
+  }
+
+  function riskClass(level) {
+    var l = String(level || "");
+    if (l === "High") return "risk High";
+    if (l.indexOf("Medium High") !== -1) return "risk mh";
+    return "risk";
+  }
+
+  function stars(n) {
+    var r = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+    return '<span class="stars">' + "★".repeat(r) + "☆".repeat(5 - r) + "</span>";
+  }
+
+  function reviewText(rev) {
+    if (!rev) return "";
+    if (typeof rev.text === "string") return rev.text;
+    if (rev.text && typeof rev.text.text === "string") return rev.text.text;
+    return "";
+  }
+
+  function loadMapsJs(mapsKey) {
+    if (window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(mapsKey) + "&v=weekly";
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error("Google Maps failed to load")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function loadGoogleReviews(op, mount) {
+    mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Pulling live from Google…</p>";
+    if (!GOOGLE_MAPS_KEY) {
+      mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Google reviews are not wired yet.</p>";
       return;
     }
-    if (typeof place.fetchFields === "function") {
-      await place.fetchFields({
+    loadMapsJs(GOOGLE_MAPS_KEY).then(function () {
+      return google.maps.importLibrary("places");
+    }).then(function (lib) {
+      var Place = lib.Place;
+      var query = [op.operation_name, op.city, "TX", zipOf(op), "child care"].filter(Boolean).join(" ");
+      return Place.searchByText({
+        textQuery: query,
         fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"],
+        maxResultCount: 1
       });
-    }
-    const name = place.displayName || "";
-    const addr = place.formattedAddress || "";
-    const rating = place.rating;
-    const count = place.userRatingCount;
-    const maps = place.googleMapsURI || "";
-    const reviews = Array.isArray(place.reviews) ? place.reviews.slice(0, 5) : [];
-    const cards = reviews.map((rev) => {
-      const author = (rev.authorAttribution && rev.authorAttribution.displayName) || "Google user";
-      const text = reviewText(rev);
-      const when = rev.relativePublishTimeDescription || "";
-      return `<div class="row review">
-        <strong>${escapeHtml(author)} ${stars(rev.rating)} <span class="muted">${escapeHtml(when)}</span></strong>
-        <p>${escapeHtml(text)}</p>
-      </div>`;
-    }).join("");
-    mount.innerHTML = `
-      <h2>Google reviews</h2>
-      <p class="muted">Live from Google for this page load. Not stored.</p>
-      <div class="g-box">
-        <div>
-          <b class="g-score">${rating != null ? Number(rating).toFixed(1) : "—"}</b>
-          <div>${stars(rating)} ${count != null ? escapeHtml(String(count)) + " reviews" : ""}</div>
-          <div class="muted">${escapeHtml(name)}${addr ? " · " + escapeHtml(addr) : ""}</div>
-        </div>
-        ${maps ? `<a class="source-link" href="${maps}" target="_blank" rel="noopener">See all on Google</a>` : ""}
-      </div>
-      ${cards || `<p class="muted">Google returned a listing but no review text.</p>`}
-      <p class="muted">Reviews from Google</p>`;
-  } catch (e) {
-    mount.innerHTML = `<h2>Google reviews</h2><p class="muted">Could not load Google reviews right now.</p>`;
+    }).then(function (result) {
+      var place = result && result.places && result.places[0];
+      if (!place) {
+        mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">No Google listing matched this name and city.</p>";
+        return null;
+      }
+      if (typeof place.fetchFields === "function") {
+        return place.fetchFields({
+          fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"]
+        }).then(function () { return place; });
+      }
+      return place;
+    }).then(function (place) {
+      if (!place) return;
+      var name = place.displayName || "";
+      var addr = place.formattedAddress || "";
+      var rating = place.rating;
+      var count = place.userRatingCount;
+      var maps = place.googleMapsURI || "";
+      var reviews = Array.isArray(place.reviews) ? place.reviews.slice(0, 5) : [];
+      var cards = reviews.map(function (rev) {
+        var author = (rev.authorAttribution && rev.authorAttribution.displayName) || "Google user";
+        return '<div class="row review"><strong>' + escapeHtml(author) + " " + stars(rev.rating) +
+          ' <span class="muted">' + escapeHtml(rev.relativePublishTimeDescription || "") +
+          "</span></strong><p>" + escapeHtml(reviewText(rev)) + "</p></div>";
+      }).join("");
+      mount.innerHTML =
+        "<h2>Google reviews</h2>" +
+        "<p class=\"muted\">Live from Google for this page load. Not stored.</p>" +
+        '<div class="g-box"><div><b class="g-score">' +
+        (rating != null ? Number(rating).toFixed(1) : "—") + "</b><div>" + stars(rating) + " " +
+        (count != null ? escapeHtml(String(count)) + " reviews" : "") +
+        '</div><div class="muted">' + escapeHtml(name) + (addr ? " · " + escapeHtml(addr) : "") +
+        "</div></div>" +
+        (maps ? '<a class="source-link" href="' + maps + '" target="_blank" rel="noopener">See all on Google</a>' : "") +
+        "</div>" +
+        (cards || "<p class=\"muted\">Google returned a listing but no review text.</p>") +
+        "<p class=\"muted\">Reviews from Google</p>";
+    }).catch(function () {
+      mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Could not load Google reviews right now.</p>";
+    });
   }
-}
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }[c]));
-}
+  function render(op, acts, defs) {
+    var g = gradeOf(op);
+    var zip = zipOf(op);
+    var id = safeId(op.operation_id);
+    var portal = "https://data.texas.gov/resource/bc5r-88dy.json?$where=" + encodeURIComponent("operation_id='" + id + "'");
+    var hhsc = "https://childcare.hhs.texas.gov/Public/InspectionAndComplianceHistory?operationId=" + encodeURIComponent(id);
+    var hhscSearch = "https://childcare.hhs.texas.gov/Public/childcaresearch/";
+    document.title = (op.operation_name || "Facility") + " · How Safe Is My Daycare?";
 
+    var inspectHtml = acts.length ? acts.map(function (a) {
+      return '<div class="row"><strong>' + escapeHtml(fmtDate(a.activity_date)) + " · " +
+        escapeHtml(a.activity_type || "Activity") + '</strong><span class="muted">Violation found: ' +
+        escapeHtml(a.violation_found || "—") + "</span></div>";
+    }).join("") : '<p class="muted">No inspection rows in the public file for this operation.</p>';
+
+    var defHtml = defs.length ? defs.map(function (d) {
+      return '<div class="row"><span class="' + riskClass(d.standard_risk_level) + '">' +
+        escapeHtml(d.standard_risk_level || "n/a") + "</span><strong>" +
+        escapeHtml(d.standard_number_description || "Standard") + "</strong><p>" +
+        escapeHtml(d.narrative || "") + '</p><div class="muted">Corrected at inspection: ' +
+        escapeHtml(d.corrected_at_inspection || "—") + " · Corrected " + escapeHtml(fmtDate(d.corrected_date)) +
+        " · Verified " + escapeHtml(fmtDate(d.date_correction_verified)) + "</div></div>";
+    }).join("") : '<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>';
+
+    app.innerHTML =
+      '<div class="crumb"><a href="index.html">Search</a> / ' + escapeHtml(op.city || "Texas") + "</div>" +
+      '<div class="title-row"><div>' +
+      '<div class="kicker">' + escapeHtml(op.operation_type || "") + " · #" +
+      escapeHtml(op.operation_number || op.operation_id) + "</div>" +
+      "<h1>" + escapeHtml(op.operation_name || "Facility") + "</h1>" +
+      '<p class="muted">' + escapeHtml(op.location_address || "") + (zip ? " · " + zip : "") + "</p>" +
+      "</div>" + gradeEl(g) + "</div>" +
+      '<div class="stats">' +
+      '<div class="stat"><b>' + (op.operation_status === "Y" ? "Open" : "Inactive") + "</b><span>License status</span></div>" +
+      '<div class="stat"><b>' + escapeHtml(op.total_capacity || "—") + "</b><span>Licensed capacity</span></div>" +
+      '<div class="stat"><b>' + escapeHtml(op.licensed_to_serve_ages || "—") + "</b><span>Ages</span></div>" +
+      '<div class="stat"><b>' + escapeHtml(op.total_inspections || "0") + "</b><span>Inspections on file</span></div>" +
+      '<div class="stat"><b>' + escapeHtml(op.type_of_issuance || "—") + "</b><span>Issuance</span></div>" +
+      '<div class="stat"><b>' + escapeHtml(fmtDate(op.issuance_date)) + "</b><span>Issued</span></div>" +
+      "</div>" +
+      '<p class="muted">Hours ' + escapeHtml(op.hours_of_operation || "—") + " · " +
+      escapeHtml(op.days_of_operation || "") + " · Adverse action: " +
+      escapeHtml(op.adverse_action || "—") + " · Corrective action: " +
+      escapeHtml(op.corrective_action || "—") + "</p>" +
+      '<p class="source-box"><a class="source-link" href="' + hhsc + '" target="_blank" rel="noopener">Official Texas record — Search Texas Child Care</a>' +
+      ' <span class="muted">Same HHSC inspection and compliance history this page is built from.</span></p>' +
+      "<p><a href=\"" + hhscSearch + "\" target=\"_blank\" rel=\"noopener\">HHSC Child Care Search</a> · " +
+      "<a href=\"" + portal + "\" target=\"_blank\" rel=\"noopener\">Raw operation JSON</a></p>" +
+      '<div class="section"><h2>Inspections</h2>' + inspectHtml + "</div>" +
+      '<div class="section"><h2>Deficiencies</h2>' + defHtml + "</div>";
+
+    rendered = true;
+    var gMount = document.createElement("div");
+    gMount.className = "section";
+    gMount.id = "google-reviews";
+    app.appendChild(gMount);
+    try { loadGoogleReviews(op, gMount); } catch (e) {
+      gMount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Could not load Google reviews right now.</p>";
+    }
+  }
+
+  function boot() {
+    var id = new URLSearchParams(location.search).get("id");
+    if (!id) {
+      showError("Missing facility id");
+      return;
+    }
+    Promise.all([getFacility(id), getInspections(id), getDeficiencies(id)])
+      .then(function (parts) {
+        var op = parts[0], acts = parts[1] || [], defs = parts[2] || [];
+        if (!op) throw new Error("That operation id is not in the Texas daycare file.");
+        render(op, acts, defs);
+      })
+      .catch(function (e) {
+        showError((e && e.message) || e);
+      });
+  }
+
+  boot();
+})();
 </script>
-<script >
-    const app = document.getElementById("app");
-    const id = new URLSearchParams(location.search).get("id");
-
-    function riskClass(level) {
-      const l = String(level || "");
-      if (l === "High") return "risk High";
-      if (l.includes("Medium High")) return "risk mh";
-      return "risk";
-    }
-
-    (async () => {
-    try {
-      if (!id) throw new Error("Missing facility id");
-      const [op, acts, defs] = await Promise.all([
-        getFacility(id),
-        getInspections(id),
-        getDeficiencies(id),
-      ]);
-      if (!op) throw new Error("That operation id is not in the Texas daycare file.");
-      const g = gradeOf(op);
-      document.title = `${op.operation_name} · How Safe Is My Daycare?`;
-      const zip = zipOf(op);
-      const portal = `https://data.texas.gov/resource/bc5r-88dy.json?$where=operation_id='${id}'`;
-      const hhsc = `https://childcare.hhs.texas.gov/Public/InspectionAndComplianceHistory?operationId=${id}`;
-      const hhscSearch = "https://childcare.hhs.texas.gov/Public/childcaresearch/";
-
-      app.innerHTML = `
-        <div class="crumb"><a href="index.html">Search</a> / ${escapeHtml(op.city || "Texas")}</div>
-        <div class="title-row">
-          <div>
-            <div class="kicker">${escapeHtml(op.operation_type || "")} · #${escapeHtml(op.operation_number || op.operation_id)}</div>
-            <h1>${escapeHtml(op.operation_name || "Facility")}</h1>
-            <p class="muted">${escapeHtml(op.location_address || "")}${zip ? " · " + zip : ""}</p>
-          </div>
-          ${gradeEl(g)}
-        </div>
-        <div class="stats">
-          <div class="stat"><b>${op.operation_status === "Y" ? "Open" : "Inactive"}</b><span>License status</span></div>
-          <div class="stat"><b>${escapeHtml(op.total_capacity || "—")}</b><span>Licensed capacity</span></div>
-          <div class="stat"><b>${escapeHtml(op.licensed_to_serve_ages || "—")}</b><span>Ages</span></div>
-          <div class="stat"><b>${escapeHtml(op.total_inspections || "0")}</b><span>Inspections on file</span></div>
-          <div class="stat"><b>${escapeHtml(op.type_of_issuance || "—")}</b><span>Issuance</span></div>
-          <div class="stat"><b>${fmtDate(op.issuance_date)}</b><span>Issued</span></div>
-        </div>
-        <p class="muted">Hours ${escapeHtml(op.hours_of_operation || "—")} · ${escapeHtml(op.days_of_operation || "")}
-          · Adverse action: ${escapeHtml(op.adverse_action || "—")}
-          · Corrective action: ${escapeHtml(op.corrective_action || "—")}</p>
-        <p class="source-box"><a class="source-link" href="${hhsc}" target="_blank" rel="noopener">Official Texas record — Search Texas Child Care</a>
-          <span class="muted"> Same HHSC inspection and compliance history this page is built from.</span></p>
-        <p><a href="${hhscSearch}" target="_blank" rel="noopener">HHSC Child Care Search</a> · <a href="${portal}" target="_blank" rel="noopener">Raw operation JSON</a></p>
-
-        <div class="section">
-          <h2>Inspections</h2>
-          ${acts.length ? acts.map((a) => `
-            <div class="row">
-              <strong>${fmtDate(a.activity_date)} · ${escapeHtml(a.activity_type || "Activity")}</strong>
-              <span class="muted">Violation found: ${escapeHtml(a.violation_found || "—")}</span>
-            </div>`).join("") : `<p class="muted">No inspection rows in the public file for this operation.</p>`}
-        </div>
-
-        <div class="section">
-          <h2>Deficiencies</h2>
-          ${defs.length ? defs.map((d) => `
-            <div class="row">
-              <span class="${riskClass(d.standard_risk_level)}">${escapeHtml(d.standard_risk_level || "n/a")}</span>
-              <strong>${escapeHtml(d.standard_number_description || "Standard")}</strong>
-              <p>${escapeHtml(d.narrative || "")}</p>
-              <div class="muted">Corrected at inspection: ${escapeHtml(d.corrected_at_inspection || "—")}
-                · Corrected ${fmtDate(d.corrected_date)}
-                · Verified ${fmtDate(d.date_correction_verified)}</div>
-            </div>`).join("") : `<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>`}
-        </div>
-      `;
-      const gMount = document.createElement("div");
-      gMount.className = "section";
-      gMount.id = "google-reviews";
-      app.appendChild(gMount);
-      loadGoogleReviews(op, gMount);
-    } catch (e) {
-      app.innerHTML = `<div class="err">${escapeHtml(e.message)}</div><p><a href="index.html">Back to search</a></p>`;
-    }
-    })();
-  </script>
 </body>
 </html>
