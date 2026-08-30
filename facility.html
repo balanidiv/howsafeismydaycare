@@ -6,17 +6,28 @@
   <title>Facility · How Safe Is My Daycare?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..650&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;1,6..72,700&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,650&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="google-place.js"></script>
 </head>
 <body>
   <div class="wrap">
-    <header class="top">
-      <a class="mark" href="index.html">How <em>safe</em> is my daycare?</a>
-      <nav>
+    <header class="paper-head">
+      <nav class="topline">
         <a href="about.html">How this works</a>
         <a href="https://divy.am" rel="noopener">Div Balani</a>
       </nav>
+      <a class="mark" href="index.html">How <em>safe</em> is my daycare?</a>
+      <div class="mast-rules">
+        <div class="rule-3" aria-hidden="true"></div>
+        <div class="rule-1" aria-hidden="true"></div>
+        <div class="mast-meta">
+          <span>Texas HHSC Child Care Licensing</span>
+          <span>Austin default · Travis County</span>
+          <span>Not an official state rating</span>
+        </div>
+        <div class="rule-double" aria-hidden="true"></div>
+      </div>
     </header>
     <div class="page" id="app">
       <p class="muted" id="load-status">Opening the official record from Texas HHSC…</p>
@@ -59,7 +70,6 @@
   var OPS = SODA + "/bc5r-88dy.json";
   var ACT = SODA + "/m5q4-3y3d.json";
   var NC = SODA + "/tqgd-mf4x.json";
-  var GOOGLE_MAPS_KEY = "AIzaSyBBYSljZW6mczj-ByrBSHP7Wvfyfkvh6gE";
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -177,7 +187,7 @@ function gradeOf(op, defs, acts, google) {
   function stampEl(g) {
     return '<div class="stamp stamp-lg ' + g.cls + '" title="' + escapeHtml(g.label) +
       '"><div class="stamp-core"><span class="stamp-letter">' + escapeHtml(g.letter) +
-      "</span><small>24 MO · Not a state rating</small></div></div>";
+      "</span><small>24 MO</small></div></div>";
   }
 
   function fetchJson(url, ms) {
@@ -244,86 +254,56 @@ function gradeOf(op, defs, acts, google) {
     return "";
   }
 
-  function loadMapsJs(mapsKey) {
-    if (window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
-    return new Promise(function (resolve, reject) {
-      var s = document.createElement("script");
-      s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(mapsKey) + "&v=weekly";
-      s.async = true;
-      s.onload = resolve;
-      s.onerror = function () { reject(new Error("Google Maps failed to load")); };
-      document.head.appendChild(s);
-    });
-  }
-
   function googleShell(inner) {
     return '<div class="g-rule" aria-hidden="true"></div>' +
-      '<div class="g-kicker">Third-party sentiment · not part of the letter</div>' +
-      inner;
+      '<div class="clip-sheet"><div class="g-kicker">Third-party sentiment · not part of the letter</div>' +
+      inner + "</div>";
   }
 
   function loadGoogleReviews(op, mount) {
     var done = false;
+    var timer;
     function finish(html) {
       if (done) return;
       done = true;
+      if (timer) clearTimeout(timer);
       mount.innerHTML = html;
     }
     mount.innerHTML = googleShell("<p class=\"muted\">Pulling live from Google. Not stored.</p>");
-    setTimeout(function () {
+    timer = setTimeout(function () {
       finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
-    }, 12000);
-    if (!GOOGLE_MAPS_KEY) {
-      finish(googleShell("<p class=\"muted\">Google reviews are not wired yet.</p>"));
+    }, 20000);
+    if (typeof findGoogleListing !== "function") {
+      finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
       return;
     }
-    loadMapsJs(GOOGLE_MAPS_KEY).then(function () {
-      return google.maps.importLibrary("places");
-    }).then(function (lib) {
-      var Place = lib.Place;
-      var query = [op.operation_name, op.city, "TX", zipOf(op), "child care"].filter(Boolean).join(" ");
-      return Place.searchByText({
-        textQuery: query,
-        fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"],
-        maxResultCount: 1
-      });
-    }).then(function (result) {
-      var place = result && result.places && result.places[0];
-      if (!place) {
+    findGoogleListing(op, { reviews: true }).then(function (listing) {
+      if (!listing) {
         finish(googleShell("<p class=\"muted\">No Google listing matched this name and city. Live, not stored.</p>"));
-        return null;
+        return;
       }
-      if (typeof place.fetchFields === "function") {
-        return place.fetchFields({
-          fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"]
-        }).then(function () { return place; });
-      }
-      return place;
-    }).then(function (place) {
-      if (!place) return;
-      var name = place.displayName || "";
-      var addr = place.formattedAddress || "";
-      var rating = place.rating;
-      var count = place.userRatingCount;
-      var maps = place.googleMapsURI || "";
-      var reviews = Array.isArray(place.reviews) ? place.reviews.slice(0, 5) : [];
-      var cards = reviews.map(function (rev) {
-        var author = (rev.authorAttribution && rev.authorAttribution.displayName) || "Google user";
-        return '<div class="typed"><strong>' + escapeHtml(author) + " " + stars(rev.rating) +
-          ' <span class="muted">' + escapeHtml(rev.relativePublishTimeDescription || "") +
-          "</span></strong><p>" + escapeHtml(reviewText(rev)) + "</p></div>";
+      var reviews = listing.reviews || [];
+      var quotes = reviews.map(function (rev) {
+        return '<blockquote class="clip-quote"><strong>' + escapeHtml(rev.author) + " " + stars(rev.rating) +
+          ' <span class="muted">' + escapeHtml(rev.when || "") +
+          "</span></strong><p>" + escapeHtml(rev.text || "") + "</p></blockquote>";
       }).join("");
-      if (lastCtx.op) paintGrade(gradeOf(lastCtx.op, lastCtx.defs, lastCtx.acts, { rating: rating, count: count }));
+      if (lastCtx.op) {
+        paintGrade(gradeOf(lastCtx.op, lastCtx.defs, lastCtx.acts, {
+          rating: listing.rating,
+          count: listing.count
+        }));
+      }
       finish(
         googleShell(
-          '<div class="g-box"><div><b class="g-score">' +
-          (rating != null ? Number(rating).toFixed(1) : "—") + "</b><div>" + stars(rating) +
-          ' <span class="g-count">' + (count != null ? escapeHtml(String(count)) + " reviews" : "") +
-          '</span></div><div class="muted">' + escapeHtml(name) + (addr ? " · " + escapeHtml(addr) : "") +
-          "</div></div>" +
-          (maps ? '<a class="source-link" href="' + maps + '" target="_blank" rel="noopener">See all on Google</a>' : "") +
+          '<b class="g-score">' +
+          (listing.rating != null ? Number(listing.rating).toFixed(1) : "—") + "</b><div>" + stars(listing.rating) +
+          ' <span class="g-count">' + (listing.count != null ? escapeHtml(String(listing.count)) + " reviews" : "") +
+          '</span></div><div class="muted">' + escapeHtml(listing.name) +
+          (listing.address ? " · " + escapeHtml(listing.address) : "") +
           "</div>" +
-          (cards || "<p class=\"muted\">Google returned a listing but no review text.</p>") +
+          (listing.maps ? '<p><a class="source-link" href="' + listing.maps + '" target="_blank" rel="noopener">See all on Google</a></p>' : "") +
+          (quotes || "<p class=\"muted\">Google returned a listing but no review text.</p>") +
           "<p class=\"muted\">Live from Google for this page load. Not stored.</p>"
         )
       );
@@ -388,11 +368,11 @@ function gradeOf(op, defs, acts, google) {
       '<div class="crumb"><a href="index.html">Search</a> / ' + escapeHtml(op.city || "Texas") + "</div>" +
       '<div class="folder-head"><div class="title-row"><div>' +
       '<div class="kicker">' + escapeHtml(op.operation_type || "") + " · #" +
-      escapeHtml(String(num)) + "</div>" +
+      escapeHtml(String(num)) + " · " + escapeHtml(op.city || "Texas") + " TX" + (zip ? " " + zip : "") + "</div>" +
       "<h1>" + escapeHtml(op.operation_name || "Facility") + "</h1>" +
       '<p class="muted">' + escapeHtml(op.location_address || "") + (zip ? " · " + zip : "") + "</p>" +
       "</div>" + stampEl(g) + "</div></div>" +
-      '<a class="official-bar" href="' + hhsc + '" target="_blank" rel="noopener">Open the official HHSC file →</a>' +
+      '<a class="official-bar" href="' + hhsc + '" target="_blank" rel="noopener">Open the official HHSC file</a>' +
       mixHTML(g) +
       '<div class="stats">' +
       '<div class="stat"><b>' + (op.operation_status === "Y" ? "Open" : "Inactive") + "</b><span>License status</span></div>" +
