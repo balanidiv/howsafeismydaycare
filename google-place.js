@@ -104,6 +104,7 @@
   function listingFromLegacy(det, searchHit) {
     var src = det || searchHit || {};
     return {
+      id: src.place_id || (searchHit && searchHit.place_id) || "",
       name: src.name || "",
       address: src.formatted_address || "",
       rating: src.rating,
@@ -111,6 +112,36 @@
       maps: src.url || "",
       reviews: normReviews(src.reviews)
     };
+  }
+
+  function placeKey(listing) {
+    if (!listing) return "";
+    return String(listing.id || listing.place_id || "").replace(/^places\//, "").trim();
+  }
+
+  function fillListing(base, extra) {
+    if (!base) return extra || null;
+    if (!extra) return base;
+    var out = {
+      id: base.id || extra.id,
+      name: base.name || extra.name,
+      address: base.address || extra.address,
+      rating: base.rating != null ? base.rating : extra.rating,
+      count: base.count != null ? base.count : extra.count,
+      maps: base.maps || extra.maps,
+      reviews: base.reviews || []
+    };
+    if (!hasQuotes(out) && hasQuotes(extra)) out.reviews = extra.reviews;
+    return out;
+  }
+
+  function lockOrFill(locked, later) {
+    if (!locked) return later || null;
+    if (!later) return locked;
+    var a = placeKey(locked);
+    var b = placeKey(later);
+    if (a && b && a === b) return fillListing(locked, later);
+    return locked;
   }
 
   function loadMapsJs() {
@@ -336,20 +367,20 @@
         return null;
       });
     }
-    function accept(hit) {
+    function done(hit) {
       if (!hit) return false;
       if (!wantReviews) return true;
       return hasQuotes(hit);
     }
     return tryFn(function () { return searchRest(op, wantReviews, signal); })
-      .then(function (hit) {
-        if (accept(hit)) return hit;
-        var restHit = hit;
+      .then(function (restHit) {
+        var locked = restHit || null;
+        if (done(locked)) return locked;
         return tryFn(function () { return searchNew(op, wantReviews, signal); }).then(function (jsHit) {
-          if (accept(jsHit)) return jsHit;
+          locked = lockOrFill(locked, jsHit);
+          if (done(locked)) return locked;
           return tryFn(function () { return searchLegacy(op, wantReviews, signal); }).then(function (leg) {
-            if (accept(leg)) return leg;
-            return restHit || jsHit || leg || null;
+            return lockOrFill(locked, leg);
           });
         });
       })
