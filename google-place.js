@@ -222,12 +222,15 @@
         if (place) return place;
         var phone = String((op && op.phone_number) || "").replace(/\D/g, "");
         if (phone.length !== 10) return null;
-        return Place.searchByText({
-          textQuery: phone,
+        var retry = {
+          textQuery: textQuery(op) + ", " + phone,
           fields: req.fields,
           maxResultCount: 1,
-          region: "us"
-        }).then(function (res2) {
+          region: "us",
+          language: "en"
+        };
+        if (req.locationBias) retry.locationBias = req.locationBias;
+        return Place.searchByText(retry).then(function (res2) {
           return (res2 && res2.places && res2.places[0]) || null;
         });
       }).then(function (place) {

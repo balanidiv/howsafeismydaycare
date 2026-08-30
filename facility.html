@@ -158,11 +158,14 @@ function gradeOf(op, defs, acts) {
 }
 
   function mixHTML(g) {
+    var cap = g.uncorrectedHigh12
+      ? "This file is capped at 79. Uncorrected High in the last year cannot be erased. Google is a separate exhibit."
+      : "Parent-perspective mix from the HHSC file. Google is a separate exhibit.";
     return '<div id="grade-mix"><table class="mix-ledger"><thead><tr>' +
       "<th>Safety</th><th>Inspections</th></tr></thead><tbody><tr>" +
       "<td>" + signed(g.safety) + "</td>" +
       "<td>" + signed(g.inspect) + "</td></tr></tbody></table>" +
-      '<p class="mix-cap">Parent-perspective mix from the HHSC file. Uncorrected High in the last year caps the letter. Google is a separate exhibit.</p></div>';
+      '<p class="mix-cap">' + cap + "</p></div>";
   }
   function stampEl(g) {
     return '<div class="stamp stamp-lg ' + g.cls + '" title="' + escapeHtml(g.label) +
@@ -350,6 +353,7 @@ function gradeOf(op, defs, acts) {
       '<div class="kicker">' + escapeHtml(op.operation_type || "") + " · #" +
       escapeHtml(String(num)) + " · " + escapeHtml(op.city || "Texas") + " TX" + (zip ? " " + zip : "") + "</div>" +
       "<h1>" + escapeHtml(op.operation_name || "Facility") + "</h1>" +
+      (g.uncorrectedHigh12 ? '<div class="ledger ledger-mix"><span class="high-mark">High</span></div>' : "") +
       '<p class="muted">' + escapeHtml(op.location_address || "") + (zip ? " · " + zip : "") + "</p>" +
       "</div>" + stampEl(g) + "</div></div>" +
       '<a class="official-bar" href="' + hhsc + '" target="_blank" rel="noopener">Open the official HHSC file</a>' +

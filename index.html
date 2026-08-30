@@ -319,7 +319,7 @@ function fillGoogleRatings(ops) {
     return;
   }
   if (!ops || !ops.length) {
-    nodes.forEach(function (node) { paintGoogleBadge(node, null, null); });
+    nodes.forEach(function (node) { paintGoogleBadge(node, null); });
     return;
   }
 
@@ -331,11 +331,10 @@ function fillGoogleRatings(ops) {
     if (i >= nodes.length) return;
     var node = nodes[i++];
     var op = byId[node.getAttribute("data-google-card")];
-    if (!op) { paintGoogleBadge(node, null, null); return next(); }
+    if (!op) { paintGoogleBadge(node, null); return next(); }
     findGoogleListing(op, { reviews: false, signal: signal }).then(function (listing) {
       if (!live()) return;
-      if (listing && listing.rating != null) paintGoogleBadge(node, listing.rating, listing.count);
-      else paintGoogleBadge(node, null, null);
+      paintGoogleBadge(node, listing || null);
     }).catch(function (e) {
       if (!live()) return;
       if (isAbortErr(e)) return;
@@ -344,19 +343,22 @@ function fillGoogleRatings(ops) {
   }
   next();
 }
-function paintGoogleBadge(node, rating, count) {
+function paintGoogleBadge(node, listing) {
   if (!node) return;
   node.classList.remove("is-error");
-  if (rating == null) {
+  if (!listing) {
     node.classList.add("is-empty");
     node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-empty">No Google listing</div>';
     return;
   }
   node.classList.remove("is-empty");
-  var r = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+  var rating = listing.rating;
+  var count = listing.count;
+  var num = (rating != null) ? Number(rating).toFixed(1) : "—";
+  var r = (rating != null) ? Math.max(0, Math.min(5, Math.round(Number(rating) || 0))) : 0;
   var starRow = "★".repeat(r) + "☆".repeat(5 - r);
   var n = (count != null) ? (count + " reviews") : "";
-  node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-num">' + Number(rating).toFixed(1) +
+  node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-num">' + num +
     '</div><div class="ex-stars">' + starRow + '</div><div class="ex-n">' + n + "</div>";
 }
 
