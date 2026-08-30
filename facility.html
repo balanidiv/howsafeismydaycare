@@ -6,289 +6,8 @@
   <title>Facility · How Safe Is My Daycare?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-:root {
-  --paper: #f3eee4;
-  --paper-2: #e8e1d2;
-  --ink: #1c1914;
-  --ink-2: #4a453c;
-  --rule: #c9c0ad;
-  --stamp: #b42318;
-  --stamp-ink: #fff8f0;
-  --moss: #2f4a3c;
-  --moss-2: #dce8df;
-  --gold: #8a6a1a;
-  --warn: #8a4b12;
-  --closed: #5c5346;
-  --shadow: 0 1px 0 rgba(28, 25, 20, 0.06);
-}
-
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  font-family: "IBM Plex Sans", "Source Sans 3", system-ui, sans-serif;
-  background: var(--paper);
-  color: var(--ink);
-  line-height: 1.5;
-  min-height: 100vh;
-}
-a { color: inherit; }
-a:hover { color: var(--stamp); }
-.source-box {
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 12px 14px;
-  margin: 16px 0 10px;
-}
-.source-link { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-
-.wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
-
-.top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 0 18px;
-  border-bottom: 1px solid var(--rule);
-}
-.mark {
-  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
-  font-size: 1.15rem;
-  font-weight: 560;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-}
-.mark em { font-style: italic; font-weight: 500; color: var(--stamp); }
-nav { display: flex; gap: 18px; font-size: 0.92rem; }
-nav a { text-decoration: none; color: var(--ink-2); }
-
-.hero { padding: 56px 0 28px; }
-.kicker {
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--stamp);
-  font-weight: 600;
-}
-h1 {
-  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
-  font-weight: 560;
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  margin: 10px 0 14px;
-}
-.lede { max-width: 38rem; color: var(--ink-2); font-size: 1.08rem; }
-
-.search {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  margin: 28px 0 10px;
-  padding: 8px;
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  box-shadow: var(--shadow);
-}
-.search input {
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 1.05rem;
-  padding: 12px 14px;
-  outline: none;
-  width: 100%;
-}
-.search button, .btn {
-  border: 0;
-  background: var(--ink);
-  color: var(--paper);
-  font: inherit;
-  font-weight: 600;
-  padding: 12px 18px;
-  cursor: pointer;
-}
-.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
-.hints { color: var(--ink-2); font-size: 0.9rem; }
-.hints button {
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.status { margin: 22px 0; color: var(--ink-2); }
-.err {
-  background: #f6e4de;
-  border: 1px solid #e0b8ad;
-  padding: 12px 14px;
-  margin: 16px 0;
-}
-
-.grid { display: grid; gap: 12px; padding-bottom: 64px; }
-.card {
-  display: grid;
-  grid-template-columns: 88px 1fr;
-  gap: 16px;
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 16px 18px;
-  text-decoration: none;
-  color: inherit;
-  box-shadow: var(--shadow);
-}
-.card:hover { border-color: var(--ink); }
-.card h2 {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 560;
-  margin: 0 0 4px;
-  letter-spacing: -0.02em;
-}
-.meta { color: var(--ink-2); font-size: 0.92rem; }
-.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.pill {
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 1px solid var(--rule);
-  padding: 3px 7px;
-  color: var(--ink-2);
-}
-
-.grade {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid currentColor;
-  display: grid;
-  place-items: center;
-  align-self: start;
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 650;
-  font-size: 1.7rem;
-  line-height: 1;
-  transform: rotate(-8deg);
-}
-.grade small { display: block; font-family: "IBM Plex Sans", sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; }
-.g-A { color: var(--moss); background: var(--moss-2); }
-.g-B { color: #245c4a; background: #e3efe8; }
-.g-C { color: var(--gold); background: #f3ead0; }
-.g-D { color: var(--warn); background: #f6e6d2; }
-.g-F, .g-X { color: var(--stamp); background: #f7e4df; }
-.g-Z { color: var(--closed); background: #ece8df; }
-
-.page { padding: 36px 0 80px; }
-.crumb { color: var(--ink-2); font-size: 0.9rem; margin-bottom: 10px; }
-.crumb a { color: inherit; }
-.title-row { display: grid; grid-template-columns: 1fr 96px; gap: 20px; align-items: start; }
-h2.page-title, .page h1 {
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 560;
-  letter-spacing: -0.03em;
-  margin: 0 0 8px;
-}
-.mix { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0 8px; }
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin: 22px 0;
-}
-.stat {
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 12px 14px;
-}
-.stat b { display: block; font-size: 1.15rem; }
-.stat span { color: var(--ink-2); font-size: 0.82rem; }
-
-.section h2 {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1.4rem;
-  margin: 36px 0 12px;
-}
-.row {
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 14px 16px;
-  margin-bottom: 8px;
-}
-.row strong { display: block; }
-.muted { color: var(--ink-2); }
-.risk {
-  display: inline-block;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border: 1px solid currentColor;
-  margin-right: 6px;
-}
-.risk.High { color: var(--stamp); }
-.risk.Medium.High, .risk.mh { color: var(--warn); }
-
-
-.g-box {
-  background: #fff;
-  border: 3px solid #4285F4;
-  padding: 18px 20px;
-  margin: 8px 0 16px;
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.g-kicker {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #4285F4;
-  margin-bottom: 4px;
-}
-.g-score {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 3.1rem;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-  color: #202124;
-}
-.g-box .stars { letter-spacing: 0.08em; color: #F4B400; font-size: 1.45rem; }
-.g-box .g-count { font-size: 1.05rem; font-weight: 600; color: #202124; }
-.g-box .source-link { color: #1a73e8; font-weight: 700; text-underline-offset: 3px; }
-.review p { margin: 6px 0 0; color: var(--ink-2); }
-.stars { letter-spacing: 0.06em; color: #F4B400; }
-
-.prose { max-width: 42rem; }
-.prose h1 { font-size: 2.4rem; margin-bottom: 12px; }
-.prose h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.35rem; margin-top: 32px; }
-.prose p, .prose li { color: var(--ink-2); }
-.prose table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-.prose th, .prose td { text-align: left; border-bottom: 1px solid var(--rule); padding: 7px 6px; font-size: 0.95rem; }
-
-footer {
-  border-top: 1px solid var(--rule);
-  padding: 22px 0 40px;
-  color: var(--ink-2);
-  font-size: 0.88rem;
-}
-footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-
-@media (max-width: 640px) {
-  .search { grid-template-columns: 1fr; }
-  .card, .title-row { grid-template-columns: 1fr; }
-  .grade { width: 68px; height: 68px; }
-}
-
-</style>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..650&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="wrap">
@@ -300,7 +19,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </nav>
     </header>
     <div class="page" id="app">
-      <p class="muted" id="load-status">Loading official record from Texas HHSC…</p>
+      <p class="muted" id="load-status">Opening the official record from Texas HHSC…</p>
     </div>
   </div>
   <footer>
@@ -359,6 +78,12 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   }
 
+  function signed(n) {
+    var v = Number(n) || 0;
+    if (v > 0) return "+" + v;
+    if (v < 0) return "\u2212" + Math.abs(v);
+    return "0";
+  }
 
 function daysAgo(raw) {
   if (!raw) return null;
@@ -396,9 +121,9 @@ function reviewMod(google) {
 function gradeOf(op, defs, acts, google) {
   defs = defs || [];
   acts = acts || [];
-  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, reviews: 0, capped: false };
+  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, reviews: 0, capped: false, uncorrectedHigh12: false };
   var closed = String(op.operation_status).toUpperCase() !== "Y" || String(op.temporarily_closed).toUpperCase() === "YES";
-  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, reviews: 0, capped: false };
+  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, reviews: 0, capped: false, uncorrectedHigh12: false };
   var safety = 0, uncorrectedHigh12 = false, i;
   for (i = 0; i < defs.length; i++) {
     var d = defs[i];
@@ -427,21 +152,21 @@ function gradeOf(op, defs, acts, google) {
   if (uncorrectedHigh12 && raw > 79) { raw = 79; capped = true; }
   var score = Math.max(0, Math.min(100, Math.round(raw)));
   var letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, reviews: reviews, capped: capped };
+  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, reviews: reviews, capped: capped, uncorrectedHigh12: uncorrectedHigh12 };
 }
 
   function mixHTML(g) {
-    var cap = g.capped ? ' <span class="muted">Capped: uncorrected High in the last 12 months.</span>' : '';
-    return '<div class="mix" id="grade-mix">' +
-      '<div class="stat"><b>' + g.safety + '</b><span>Safety · HHSC last 24 mo</span></div>' +
-      '<div class="stat"><b>' + (g.inspect > 0 ? '+' : '') + g.inspect + '</b><span>Inspections · recent visits</span></div>' +
-      '<div class="stat"><b>' + (g.reviews > 0 ? '+' : '') + g.reviews + '</b><span>Reviews · Google live</span></div></div>' +
-      '<p class="muted">Start at 100. Letter is this mix, not lifetime counts.' + cap + '</p>';
+    return '<div id="grade-mix"><table class="mix-ledger"><thead><tr>' +
+      "<th>Safety</th><th>Inspections</th><th class=\"mod\">Reviews</th></tr></thead><tbody><tr>" +
+      "<td>" + signed(g.safety) + "</td>" +
+      "<td>" + signed(g.inspect) + "</td>" +
+      "<td class=\"mod\">" + signed(g.reviews) + "</td></tr></tbody></table>" +
+      '<p class="mix-cap">Parent-perspective mix. Uncorrected High in the last year caps the letter.</p></div>';
   }
   var lastCtx = { op: null, acts: [], defs: [] };
   function paintGrade(g) {
-    var badge = document.querySelector(".title-row .grade");
-    if (badge) badge.outerHTML = gradeEl(g);
+    var badge = document.querySelector(".folder-head .stamp");
+    if (badge) badge.outerHTML = stampEl(g);
     var mix = document.getElementById("grade-mix");
     if (mix) {
       var wrap = document.createElement("div");
@@ -449,10 +174,10 @@ function gradeOf(op, defs, acts, google) {
       mix.replaceWith(wrap.firstChild);
     }
   }
-  function gradeEl(g) {
-    return '<div class="grade ' + g.cls + '" title="' + escapeHtml(g.label) + '"><div>' +
-      escapeHtml(g.letter) + "<small>" + escapeHtml(g.score == null ? g.label : String(g.score)) +
-      "</small></div></div>";
+  function stampEl(g) {
+    return '<div class="stamp stamp-lg ' + g.cls + '" title="' + escapeHtml(g.label) +
+      '"><div class="stamp-core"><span class="stamp-letter">' + escapeHtml(g.letter) +
+      "</span><small>24 MO · Not a state rating</small></div></div>";
   }
 
   function fetchJson(url, ms) {
@@ -531,10 +256,25 @@ function gradeOf(op, defs, acts, google) {
     });
   }
 
+  function googleShell(inner) {
+    return '<div class="g-rule" aria-hidden="true"></div>' +
+      '<div class="g-kicker">Third-party sentiment · not part of the letter</div>' +
+      inner;
+  }
+
   function loadGoogleReviews(op, mount) {
-    mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Pulling live from Google…</p>";
+    var done = false;
+    function finish(html) {
+      if (done) return;
+      done = true;
+      mount.innerHTML = html;
+    }
+    mount.innerHTML = googleShell("<p class=\"muted\">Pulling live from Google. Not stored.</p>");
+    setTimeout(function () {
+      finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
+    }, 12000);
     if (!GOOGLE_MAPS_KEY) {
-      mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Google reviews are not wired yet.</p>";
+      finish(googleShell("<p class=\"muted\">Google reviews are not wired yet.</p>"));
       return;
     }
     loadMapsJs(GOOGLE_MAPS_KEY).then(function () {
@@ -550,7 +290,7 @@ function gradeOf(op, defs, acts, google) {
     }).then(function (result) {
       var place = result && result.places && result.places[0];
       if (!place) {
-        mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">No Google listing matched this name and city.</p>";
+        finish(googleShell("<p class=\"muted\">No Google listing matched this name and city. Live, not stored.</p>"));
         return null;
       }
       if (typeof place.fetchFields === "function") {
@@ -569,25 +309,26 @@ function gradeOf(op, defs, acts, google) {
       var reviews = Array.isArray(place.reviews) ? place.reviews.slice(0, 5) : [];
       var cards = reviews.map(function (rev) {
         var author = (rev.authorAttribution && rev.authorAttribution.displayName) || "Google user";
-        return '<div class="row review"><strong>' + escapeHtml(author) + " " + stars(rev.rating) +
+        return '<div class="typed"><strong>' + escapeHtml(author) + " " + stars(rev.rating) +
           ' <span class="muted">' + escapeHtml(rev.relativePublishTimeDescription || "") +
           "</span></strong><p>" + escapeHtml(reviewText(rev)) + "</p></div>";
       }).join("");
       if (lastCtx.op) paintGrade(gradeOf(lastCtx.op, lastCtx.defs, lastCtx.acts, { rating: rating, count: count }));
-      mount.innerHTML =
-        "<h2>Google reviews</h2>" +
-        "<p class=\"muted\">Live from Google for this page load. Not stored.</p>" +
-        '<div class="g-box"><div><div class="g-kicker">Google rating</div><b class="g-score">' +
-        (rating != null ? Number(rating).toFixed(1) : "—") + "</b><div>" + stars(rating) +
-        ' <span class="g-count">' + (count != null ? escapeHtml(String(count)) + " reviews" : "") +
-        '</span></div><div class="muted">' + escapeHtml(name) + (addr ? " · " + escapeHtml(addr) : "") +
-        "</div></div>" +
-        (maps ? '<a class="source-link" href="' + maps + '" target="_blank" rel="noopener">See all on Google</a>' : "") +
-        "</div>" +
-        (cards || "<p class=\"muted\">Google returned a listing but no review text.</p>") +
-        "<p class=\"muted\">Reviews from Google</p>";
+      finish(
+        googleShell(
+          '<div class="g-box"><div><b class="g-score">' +
+          (rating != null ? Number(rating).toFixed(1) : "—") + "</b><div>" + stars(rating) +
+          ' <span class="g-count">' + (count != null ? escapeHtml(String(count)) + " reviews" : "") +
+          '</span></div><div class="muted">' + escapeHtml(name) + (addr ? " · " + escapeHtml(addr) : "") +
+          "</div></div>" +
+          (maps ? '<a class="source-link" href="' + maps + '" target="_blank" rel="noopener">See all on Google</a>' : "") +
+          "</div>" +
+          (cards || "<p class=\"muted\">Google returned a listing but no review text.</p>") +
+          "<p class=\"muted\">Live from Google for this page load. Not stored.</p>"
+        )
+      );
     }).catch(function () {
-      mount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Could not load Google reviews right now.</p>";
+      finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
     });
   }
 
@@ -596,9 +337,7 @@ function gradeOf(op, defs, acts, google) {
     var g = gradeOf(op, defs, acts, null);
     var zip = zipOf(op);
     var id = safeId(op.operation_id);
-    var portal = "https://data.texas.gov/resource/bc5r-88dy.json?$where=" + encodeURIComponent("operation_id='" + id + "'");
     var hhsc = "https://childcare.hhs.texas.gov/Public/InspectionAndComplianceHistory?operationId=" + encodeURIComponent(id);
-    var hhscSearch = "https://childcare.hhs.texas.gov/Public/childcaresearch/";
     document.title = (op.operation_name || "Facility") + " · How Safe Is My Daycare?";
 
     function shortViolation(d) {
@@ -625,31 +364,36 @@ function gradeOf(op, defs, acts, google) {
         var related = defsByAct[String(a.activity_id || "")] || [];
         extra = related.length
           ? related.slice(0, 2).map(shortViolation).join(" · ")
-          : "See deficiencies below.";
+          : "See findings below.";
         extra = '<p class="muted">' + escapeHtml(extra) + "</p>";
       }
-      return '<div class="row"><strong>' + escapeHtml(fmtDate(a.activity_date)) + " · " +
+      return '<div class="sheet"><strong>' + escapeHtml(fmtDate(a.activity_date)) + " · " +
         escapeHtml(a.activity_type || "Activity") + '</strong><span class="muted">Violation found: ' +
         escapeHtml(a.violation_found || "—") + "</span>" + extra + "</div>";
     }).join("") : '<p class="muted">No inspection rows in the public file for this operation.</p>';
 
     var defHtml = defs.length ? defs.map(function (d) {
-      return '<div class="row"><span class="' + riskClass(d.standard_risk_level) + '">' +
-        escapeHtml(d.standard_risk_level || "n/a") + "</span><strong>" +
-        escapeHtml(d.standard_number_description || "Standard") + "</strong><p>" +
-        escapeHtml(d.narrative || "") + '</p><div class="muted">Corrected at inspection: ' +
+      var openHigh = String(d.standard_risk_level) === "High" && isUncorrected(d);
+      return '<div class="finding' + (openHigh ? " is-open-high" : "") + '"><div class="finding-head"><strong>' +
+        escapeHtml(d.standard_number_description || "Standard") + '</strong><span class="' +
+        riskClass(d.standard_risk_level) + '">' + escapeHtml(d.standard_risk_level || "n/a") +
+        "</span></div>" + (d.narrative ? "<p>" + escapeHtml(d.narrative) + "</p>" : "") +
+        '<div class="muted">Corrected at inspection: ' +
         escapeHtml(d.corrected_at_inspection || "—") + " · Corrected " + escapeHtml(fmtDate(d.corrected_date)) +
         " · Verified " + escapeHtml(fmtDate(d.date_correction_verified)) + "</div></div>";
     }).join("") : '<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>';
 
+    var num = op.operation_number || op.operation_id;
     app.innerHTML =
       '<div class="crumb"><a href="index.html">Search</a> / ' + escapeHtml(op.city || "Texas") + "</div>" +
-      '<div class="title-row"><div>' +
+      '<div class="folder-head"><div class="title-row"><div>' +
       '<div class="kicker">' + escapeHtml(op.operation_type || "") + " · #" +
-      escapeHtml(op.operation_number || op.operation_id) + "</div>" +
+      escapeHtml(String(num)) + "</div>" +
       "<h1>" + escapeHtml(op.operation_name || "Facility") + "</h1>" +
       '<p class="muted">' + escapeHtml(op.location_address || "") + (zip ? " · " + zip : "") + "</p>" +
-      "</div>" + gradeEl(g) + "</div>" + mixHTML(g) +
+      "</div>" + stampEl(g) + "</div></div>" +
+      '<a class="official-bar" href="' + hhsc + '" target="_blank" rel="noopener">Open the official HHSC file →</a>' +
+      mixHTML(g) +
       '<div class="stats">' +
       '<div class="stat"><b>' + (op.operation_status === "Y" ? "Open" : "Inactive") + "</b><span>License status</span></div>" +
       '<div class="stat"><b>' + escapeHtml(op.total_capacity || "—") + "</b><span>Licensed capacity</span></div>" +
@@ -662,20 +406,16 @@ function gradeOf(op, defs, acts, google) {
       escapeHtml(op.days_of_operation || "") + " · Adverse action: " +
       escapeHtml(op.adverse_action || "—") + " · Corrective action: " +
       escapeHtml(op.corrective_action || "—") + "</p>" +
-      '<p class="source-box"><a class="source-link" href="' + hhsc + '" target="_blank" rel="noopener">Official Texas record — Search Texas Child Care</a>' +
-      ' <span class="muted">Same HHSC inspection and compliance history this page is built from.</span></p>' +
-      "<p><a href=\"" + hhscSearch + "\" target=\"_blank\" rel=\"noopener\">HHSC Child Care Search</a> · " +
-      "<a href=\"" + portal + "\" target=\"_blank\" rel=\"noopener\">Raw operation JSON</a></p>" +
       '<div class="section"><h2>Inspections</h2>' + inspectHtml + "</div>" +
-      '<div class="section"><h2>Deficiencies</h2>' + defHtml + "</div>";
+      '<div class="section"><h2>Findings</h2>' + defHtml + "</div>";
 
     rendered = true;
     var gMount = document.createElement("div");
-    gMount.className = "section";
+    gMount.className = "g-section";
     gMount.id = "google-reviews";
     app.appendChild(gMount);
     try { loadGoogleReviews(op, gMount); } catch (e) {
-      gMount.innerHTML = "<h2>Google reviews</h2><p class=\"muted\">Could not load Google reviews right now.</p>";
+      gMount.innerHTML = googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>");
     }
   }
 

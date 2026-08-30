@@ -9,277 +9,8 @@
   <meta property="og:description" content="Public inspection and licensing records for Texas daycares, readable in one place." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-:root {
-  --paper: #f3eee4;
-  --paper-2: #e8e1d2;
-  --ink: #1c1914;
-  --ink-2: #4a453c;
-  --rule: #c9c0ad;
-  --stamp: #b42318;
-  --stamp-ink: #fff8f0;
-  --moss: #2f4a3c;
-  --moss-2: #dce8df;
-  --gold: #8a6a1a;
-  --warn: #8a4b12;
-  --closed: #5c5346;
-  --shadow: 0 1px 0 rgba(28, 25, 20, 0.06);
-}
-
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  font-family: "IBM Plex Sans", "Source Sans 3", system-ui, sans-serif;
-  background: var(--paper);
-  color: var(--ink);
-  line-height: 1.5;
-  min-height: 100vh;
-}
-a { color: inherit; }
-a:hover { color: var(--stamp); }
-
-.wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
-
-.top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 0 18px;
-  border-bottom: 1px solid var(--rule);
-}
-.mark {
-  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
-  font-size: 1.15rem;
-  font-weight: 560;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-}
-.mark em { font-style: italic; font-weight: 500; color: var(--stamp); }
-nav { display: flex; gap: 18px; font-size: 0.92rem; }
-nav a { text-decoration: none; color: var(--ink-2); }
-
-.hero { padding: 56px 0 28px; }
-.kicker {
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--stamp);
-  font-weight: 600;
-}
-h1 {
-  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
-  font-weight: 560;
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  margin: 10px 0 14px;
-}
-.lede { max-width: 38rem; color: var(--ink-2); font-size: 1.08rem; }
-
-.search {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  margin: 28px 0 10px;
-  padding: 8px;
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  box-shadow: var(--shadow);
-}
-.search input {
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 1.05rem;
-  padding: 12px 14px;
-  outline: none;
-  width: 100%;
-}
-.search button, .btn {
-  border: 0;
-  background: var(--ink);
-  color: var(--paper);
-  font: inherit;
-  font-weight: 600;
-  padding: 12px 18px;
-  cursor: pointer;
-}
-.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
-.hints { color: var(--ink-2); font-size: 0.9rem; }
-.hints button {
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.status { margin: 22px 0; color: var(--ink-2); }
-.err {
-  background: #f6e4de;
-  border: 1px solid #e0b8ad;
-  padding: 12px 14px;
-  margin: 16px 0;
-}
-
-.grid { display: grid; gap: 12px; padding-bottom: 64px; }
-.card {
-  display: grid;
-  grid-template-columns: 88px 1fr auto;
-  gap: 16px;
-  align-items: start;
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 16px 18px;
-  text-decoration: none;
-  color: inherit;
-  box-shadow: var(--shadow);
-}
-.card:hover { border-color: var(--ink); }
-.card h2 {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 560;
-  margin: 0 0 4px;
-  letter-spacing: -0.02em;
-}
-.meta { color: var(--ink-2); font-size: 0.92rem; }
-.g-badge {
-  min-width: 96px;
-  text-align: center;
-  background: #fff;
-  border: 2px solid #4285F4;
-  padding: 8px 10px 10px;
-  color: #1a1a1a;
-}
-.g-badge .g-kicker {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #4285F4;
-}
-.g-badge .g-num {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1.85rem;
-  font-weight: 650;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-.g-badge .g-stars { color: #F4B400; font-size: 1.05rem; letter-spacing: 0.04em; }
-.g-badge .g-n { font-size: 0.75rem; color: #3c4043; margin-top: 2px; }
-.g-badge.is-empty { border-color: var(--rule); color: var(--ink-2); }
-.g-badge.is-empty .g-kicker { color: var(--ink-2); }
-.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.pill {
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 1px solid var(--rule);
-  padding: 3px 7px;
-  color: var(--ink-2);
-}
-
-.grade {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid currentColor;
-  display: grid;
-  place-items: center;
-  align-self: start;
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 650;
-  font-size: 1.7rem;
-  line-height: 1;
-  transform: rotate(-8deg);
-}
-.grade small { display: block; font-family: "IBM Plex Sans", sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; }
-.g-A { color: var(--moss); background: var(--moss-2); }
-.g-B { color: #245c4a; background: #e3efe8; }
-.g-C { color: var(--gold); background: #f3ead0; }
-.g-D { color: var(--warn); background: #f6e6d2; }
-.g-F, .g-X { color: var(--stamp); background: #f7e4df; }
-.g-Z { color: var(--closed); background: #ece8df; }
-
-.page { padding: 36px 0 80px; }
-.crumb { color: var(--ink-2); font-size: 0.9rem; margin-bottom: 10px; }
-.crumb a { color: inherit; }
-.title-row { display: grid; grid-template-columns: 1fr 96px; gap: 20px; align-items: start; }
-h2.page-title, .page h1 {
-  font-family: "Fraunces", Georgia, serif;
-  font-weight: 560;
-  letter-spacing: -0.03em;
-  margin: 0 0 8px;
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin: 22px 0;
-}
-.stat {
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 12px 14px;
-}
-.stat b { display: block; font-size: 1.15rem; }
-.stat span { color: var(--ink-2); font-size: 0.82rem; }
-
-.section h2 {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1.4rem;
-  margin: 36px 0 12px;
-}
-.row {
-  background: #fffdf8;
-  border: 1px solid var(--rule);
-  padding: 14px 16px;
-  margin-bottom: 8px;
-}
-.row strong { display: block; }
-.muted { color: var(--ink-2); }
-.risk {
-  display: inline-block;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border: 1px solid currentColor;
-  margin-right: 6px;
-}
-.risk.High { color: var(--stamp); }
-.risk.Medium.High, .risk.mh { color: var(--warn); }
-
-.prose { max-width: 42rem; }
-.prose h1 { font-size: 2.4rem; margin-bottom: 12px; }
-.prose h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.35rem; margin-top: 32px; }
-.prose p, .prose li { color: var(--ink-2); }
-.prose table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-.prose th, .prose td { text-align: left; border-bottom: 1px solid var(--rule); padding: 7px 6px; font-size: 0.95rem; }
-
-footer {
-  border-top: 1px solid var(--rule);
-  padding: 22px 0 40px;
-  color: var(--ink-2);
-  font-size: 0.88rem;
-}
-footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-
-@media (max-width: 640px) {
-  .search { grid-template-columns: 1fr; }
-  .card { grid-template-columns: 88px 1fr; }
-  .title-row { grid-template-columns: 1fr; }
-  .g-badge { justify-self: start; }
-  .grade { width: 68px; height: 68px; }
-}
-
-</style>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..650&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="wrap">
@@ -291,22 +22,29 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </nav>
     </header>
 
-    <section class="hero">
-      <div class="kicker">Texas · official public records</div>
+    <section class="masthead">
+      <div class="mast-kicker">
+        <span>Texas HHSC Child Care Licensing</span>
+        <span>Austin default · Travis County</span>
+      </div>
+      <div class="double-hair" aria-hidden="true"></div>
       <h1>Inspection history, without the state-portal scavenger hunt.</h1>
-      <p class="lede">Search a licensed Texas daycare by name, city, or ZIP. Records come live from <a href="https://childcare.hhs.texas.gov/Public/childcaresearch/" target="_blank" rel="noopener">Search Texas Child Care</a> (HHSC) via the state’s open data. Grades use the last 24 months of HHSC findings and inspections, not a lifetime pile-on. Not an official state rating.</p>
+      <p class="lede">Search a licensed Texas daycare by name, city, or ZIP; the letter is the last 24 months of the HHSC file, not a lifetime pile-on. Not an official state rating.</p>
       <form class="search" id="form">
-        <input id="q" type="search" placeholder="Try Austin, 78704, or a center name" autocomplete="off" />
-        <button type="submit">Search records</button>
+        <label for="q">Look up a licensed operation</label>
+        <div class="search-row">
+          <input id="q" type="search" placeholder="Try Austin, 78704, or a center name" autocomplete="off" />
+          <button type="submit">Search the record</button>
+        </div>
       </form>
-      <p class="hints">Examples:
-        <button type="button" data-q="Austin">Austin</button>,
-        <button type="button" data-q="78704">78704</button>,
+      <p class="hints">
+        <button type="button" class="filed" data-q="Austin">Filed for Austin</button>
+        <button type="button" data-q="78704">78704</button>
         <button type="button" data-q="Montessori">Montessori</button>
       </p>
     </section>
 
-    <div id="status" class="status">Loading Austin centers from Texas HHSC…</div>
+    <div id="status" class="status">Opening the Austin file…</div>
     <div id="err"></div>
     <div id="results" class="grid"></div>
   </div>
@@ -366,9 +104,9 @@ function reviewMod(google) {
 function gradeOf(op, defs, acts, google) {
   defs = defs || [];
   acts = acts || [];
-  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, reviews: 0, capped: false };
+  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, reviews: 0, capped: false, uncorrectedHigh12: false };
   var closed = String(op.operation_status).toUpperCase() !== "Y" || String(op.temporarily_closed).toUpperCase() === "YES";
-  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, reviews: 0, capped: false };
+  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, reviews: 0, capped: false, uncorrectedHigh12: false };
   var safety = 0, uncorrectedHigh12 = false, i;
   for (i = 0; i < defs.length; i++) {
     var d = defs[i];
@@ -397,7 +135,7 @@ function gradeOf(op, defs, acts, google) {
   if (uncorrectedHigh12 && raw > 79) { raw = 79; capped = true; }
   var score = Math.max(0, Math.min(100, Math.round(raw)));
   var letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, reviews: reviews, capped: capped };
+  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, reviews: reviews, capped: capped, uncorrectedHigh12: uncorrectedHigh12 };
 }
 
 function zipOf(op) {
@@ -502,30 +240,56 @@ async function loadHistory(ids) {
   return { defs: groupByOp(defs), acts: groupByOp(acts) };
 }
 
-function gradeEl(g) {
-  return `<div class="grade ${g.cls}" title="${g.label}"><div>${g.letter}<small>${g.score == null ? g.label : g.score}</small></div></div>`;
+function signed(n) {
+  var v = Number(n) || 0;
+  if (v > 0) return "+" + v;
+  if (v < 0) return "\u2212" + Math.abs(v);
+  return "0";
+}
+
+function stampEl(g) {
+  return '<div class="stamp ' + g.cls + '" title="' + escapeHtml(g.label) + '"><div class="stamp-core"><span class="stamp-letter">' +
+    escapeHtml(g.letter) + "</span><small>24 MO</small></div></div>";
+}
+
+function licenseKicker(op) {
+  var city = String(op.city || "").trim() || "Texas";
+  var st = String(op.state || "TX").trim() || "TX";
+  var zip = zipOf(op);
+  var type = op.operation_type || "Licensed operation";
+  var num = op.operation_number || op.operation_id || "";
+  var loc = [city, st, zip].filter(Boolean).join(" ");
+  return loc + " · " + type + " · #" + num;
+}
+
+function inspectCount24(acts) {
+  var n = 0;
+  (acts || []).forEach(function (a) {
+    var age = daysAgo(a.activity_date);
+    if (age != null && age <= 730) n += 1;
+  });
+  return n;
 }
 
 function cardHTML(op, hist) {
   hist = hist || { defs: {}, acts: {} };
   const id = String(op.operation_id || "");
-  const g = gradeOf(op, hist.defs[id] || [], hist.acts[id] || [], null);
-  const zip = zipOf(op);
+  const acts = hist.acts[id] || [];
+  const g = gradeOf(op, hist.defs[id] || [], acts, null);
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
-  return `<a class="card" href="${href}">
-    ${gradeEl(g)}
+  const status = op.operation_status === "Y" ? "Open" : "Inactive";
+  const cap = op.total_capacity || "—";
+  const nIns = inspectCount24(acts);
+  const high = g.uncorrectedHigh12 ? '<span class="high-mark">High</span>' : "";
+  return `<a class="file" href="${href}">
+    ${stampEl(g)}
     <div>
       <h2>${escapeHtml(op.operation_name || "Unnamed facility")}</h2>
-      <div class="meta">${escapeHtml(op.city || "")}${zip ? ", TX " + zip : ""} · ${escapeHtml(op.operation_type || "")}</div>
-      <div class="pills">
-        <span class="pill">${op.operation_status === "Y" ? "Open" : "Inactive"}</span>
-        <span class="pill">Cap. ${op.total_capacity || "—"}</span>
-        <span class="pill">${op.total_inspections || 0} inspections</span>
-        <span class="pill">Last 24 months</span>
-        <span class="pill">Safety ${g.safety} · Visits ${g.inspect}</span>
-      </div>
+      <div class="file-kicker">${escapeHtml(licenseKicker(op))}</div>
+      <div class="ledger">${status}  ·  Cap ${escapeHtml(String(cap))}  ·  ${nIns} inspections  ·  last 24 months</div>
+      <div class="ledger ledger-mix">${high}<span class="mix-pair">Safety ${signed(g.safety)}</span><span class="mix-pair">Visits ${signed(g.inspect)}</span></div>
     </div>
-    <aside class="g-badge" data-google-card="${escapeHtml(id)}"><div class="g-kicker">Google</div><div class="g-num">…</div></aside>
+    <aside class="exhibit" data-google-card="${escapeHtml(id)}"><div class="ex-kicker">Exhibit · Google</div></aside>
   </a>`;
 }
 
@@ -584,15 +348,13 @@ function paintGoogleBadge(node, rating, count) {
   if (!node) return;
   if (rating == null) {
     node.classList.add("is-empty");
-    node.innerHTML = '<div class="g-kicker">Google</div><div class="g-num">—</div><div class="g-n">No listing</div>';
+    node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-empty">No Google listing</div>';
     return;
   }
   node.classList.remove("is-empty");
-  var r = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
-  var stars = "★".repeat(r) + "☆".repeat(5 - r);
   var n = (count != null) ? (count + " reviews") : "";
-  node.innerHTML = '<div class="g-kicker">Google</div><div class="g-num">' + Number(rating).toFixed(1) +
-    '</div><div class="g-stars">' + stars + '</div><div class="g-n">' + n + "</div>";
+  node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-num">' + Number(rating).toFixed(1) +
+    '</div><div class="ex-n">' + n + "</div>";
 }
 
 
@@ -607,7 +369,7 @@ function escapeHtml(s) {
 }
 
 </script>
-<script >
+<script>
     const form = document.getElementById("form");
     const input = document.getElementById("q");
     const status = document.getElementById("status");
@@ -616,16 +378,15 @@ function escapeHtml(s) {
 
     async function run(q) {
       err.innerHTML = "";
-      status.textContent = "Querying Texas HHSC Child Care Licensing…";
+      status.textContent = "Opening the record…";
       results.innerHTML = "";
       try {
         const rows = await searchFacilities(q);
-        const label = q && q.trim() ? `“${q.trim()}”` : "Austin (default)";
-        status.textContent = rows.length
-          ? `${rows.length} licensed child-care operations for ${label}. Grades use the last 24 months, not lifetime counts.`
-          : `No licensed child-care operations matched ${label}.`;
-        status.textContent = "Scoring last 24 months of HHSC inspections…";
         const hist = await loadHistory(rows.map((r) => r.operation_id));
+        const place = q && q.trim() ? q.trim() : "Austin";
+        status.textContent = rows.length
+          ? `24-month HHSC file · ${place}`
+          : `No licensed operations matched ${place}.`;
         results.innerHTML = rows.map((op) => cardHTML(op, hist)).join("");
         fillGoogleRatings(rows);
       } catch (e) {
