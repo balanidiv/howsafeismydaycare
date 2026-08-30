@@ -183,8 +183,6 @@ a.file:hover { color: var(--ink); border-top-color: var(--stamp); }
   font-weight: 700;
   margin: 0 0 4px;
   letter-spacing: -0.01em;
-  font-variant: small-caps;
-  font-variant-caps: small-caps;
 }
 .file-kicker, .ledger, .kicker, .mast-meta, .ex-kicker, .g-kicker {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -300,11 +298,11 @@ a.file:hover { color: var(--ink); border-top-color: var(--stamp); }
   line-height: 1.25;
 }
 .exhibit .ex-num {
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 600;
+  font-family: "Newsreader", "Fraunces", Georgia, serif;
+  font-weight: 700;
   font-size: 1.15rem;
   line-height: 1.1;
-  color: var(--google-blue);
+  color: var(--ink);
   margin: 4px 0 2px;
 }
 .exhibit .ex-stars {
@@ -483,12 +481,12 @@ a.official-bar:hover { color: var(--paper); background: var(--stamp); }
   transform: rotate(0.4deg);
 }
 .g-score {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "Newsreader", "Fraunces", Georgia, serif;
   font-size: 1.6rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 0.95;
-  color: var(--google-blue);
+  color: var(--ink);
 }
 .g-box .stars, .stars { letter-spacing: 0.06em; color: var(--google-star); }
 .g-box .g-count { font-size: 0.9rem; font-weight: 600; color: var(--ink); }
