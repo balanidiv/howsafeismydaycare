@@ -35,11 +35,26 @@
     return parts.join(", ");
   }
 
-  function biasLatLng(op) {
+  function austinBias(op) {
     if (String((op && op.city) || "").toUpperCase() === "AUSTIN") {
       return { lat: 30.2672, lng: -97.7431 };
     }
-    return { lat: 31.0, lng: -99.9 };
+    return null;
+  }
+
+  function isAbortErr(e) {
+    return !!(e && (e.name === "AbortError" || String((e && e.message) || "").toLowerCase() === "aborted"));
+  }
+
+  function abortErr(signal) {
+    if (signal && signal.reason) return signal.reason;
+    var e = new Error("aborted");
+    e.name = "AbortError";
+    return e;
+  }
+
+  function throwIfAborted(signal) {
+    if (signal && signal.aborted) throw abortErr(signal);
   }
 
   function normReviews(arr) {
@@ -123,26 +138,54 @@
     return p;
   }
 
-  function withTimeout(promise, ms, msg) {
+  function withTimeout(promise, ms, msg, signal) {
     return new Promise(function (resolve, reject) {
+      if (signal && signal.aborted) {
+        reject(abortErr(signal));
+        return;
+      }
       var t = setTimeout(function () { reject(new Error(msg || "timeout")); }, ms);
-      promise.then(function (v) { clearTimeout(t); resolve(v); }, function (e) { clearTimeout(t); reject(e); });
+      function onAbort() {
+        clearTimeout(t);
+        reject(abortErr(signal));
+      }
+      if (signal && signal.addEventListener) signal.addEventListener("abort", onAbort);
+      promise.then(function (v) {
+        clearTimeout(t);
+        if (signal && signal.removeEventListener) signal.removeEventListener("abort", onAbort);
+        if (signal && signal.aborted) reject(abortErr(signal));
+        else resolve(v);
+      }, function (e) {
+        clearTimeout(t);
+        if (signal && signal.removeEventListener) signal.removeEventListener("abort", onAbort);
+        reject(e);
+      });
     });
   }
 
-  function searchNew(op, wantReviews) {
+  function fetchWithSignal(url, init, signal) {
+    init = init || {};
+    if (signal) init.signal = signal;
+    return fetch(url, init);
+  }
+
+  function searchNew(op, wantReviews, signal) {
+    throwIfAborted(signal);
+    var req = {
+      textQuery: textQuery(op),
+      fields: ["id", "displayName", "formattedAddress", "rating", "userRatingCount"],
+      maxResultCount: 1,
+      region: "us",
+      language: "en"
+    };
+    var bias = austinBias(op);
+    if (bias) req.locationBias = bias;
     return withTimeout(loadMapsJs().then(function () {
+      throwIfAborted(signal);
       return google.maps.importLibrary("places");
     }).then(function (lib) {
+      throwIfAborted(signal);
       var Place = lib.Place;
-      var req = {
-        textQuery: textQuery(op),
-        fields: ["id", "displayName", "formattedAddress", "rating", "userRatingCount"],
-        maxResultCount: 1,
-        region: "us",
-        language: "en",
-        locationBias: biasLatLng(op)
-      };
       return Place.searchByText(req).then(function (res) {
         var place = res && res.places && res.places[0];
         if (place) return place;
@@ -157,6 +200,7 @@
           return (res2 && res2.places && res2.places[0]) || null;
         });
       }).then(function (place) {
+        throwIfAborted(signal);
         if (!place) return null;
         if (!wantReviews || typeof place.fetchFields !== "function") return listingFromJsPlace(place);
         return place.fetchFields({
@@ -167,13 +211,16 @@
           return listingFromJsPlace(place);
         });
       });
-    }), 10000, "Place.searchByText timed out");
+    }), 10000, "Place.searchByText timed out", signal);
   }
 
-  function searchLegacy(op, wantReviews) {
+  function searchLegacy(op, wantReviews, signal) {
+    throwIfAborted(signal);
     return withTimeout(loadMapsJs().then(function () {
+      throwIfAborted(signal);
       return google.maps.importLibrary("places");
     }).then(function () {
+      throwIfAborted(signal);
       return new Promise(function (resolve, reject) {
         if (!google.maps.places || !google.maps.places.PlacesService) {
           reject(new Error("Legacy PlacesService unavailable"));
@@ -181,6 +228,7 @@
         }
         var svc = new google.maps.places.PlacesService(document.createElement("div"));
         svc.textSearch({ query: textQuery(op) }, function (results, status) {
+          if (signal && signal.aborted) { reject(abortErr(signal)); return; }
           if (status === "ZERO_RESULTS") { resolve(null); return; }
           if (status !== "OK" || !results || !results[0]) {
             if (status === "OK") { resolve(null); return; }
@@ -193,22 +241,24 @@
             placeId: hit.place_id,
             fields: ["name", "formatted_address", "rating", "user_ratings_total", "reviews", "url"]
           }, function (det, st) {
+            if (signal && signal.aborted) { reject(abortErr(signal)); return; }
             if (st === "OK" && det) resolve(listingFromLegacy(det, hit));
             else resolve(listingFromLegacy(null, hit));
           });
         });
       });
-    }), 10000, "PlacesService timed out");
+    }), 10000, "PlacesService timed out", signal);
   }
 
-  function fetchRestDetails(listing) {
+  function fetchRestDetails(listing, signal) {
     if (!listing || !listing.id) return Promise.resolve(listing);
-    return withTimeout(fetch("https://places.googleapis.com/v1/places/" + encodeURIComponent(listing.id), {
+    throwIfAborted(signal);
+    return withTimeout(fetchWithSignal("https://places.googleapis.com/v1/places/" + encodeURIComponent(listing.id), {
       headers: {
         "X-Goog-Api-Key": KEY,
         "X-Goog-FieldMask": "id,displayName,formattedAddress,rating,userRatingCount,googleMapsUri,reviews"
       }
-    }).then(function (res) {
+    }, signal).then(function (res) {
       if (!res.ok) throw new Error("Places details " + res.status);
       return res.json();
     }).then(function (p) {
@@ -220,28 +270,32 @@
       if (!detailed.maps) detailed.maps = listing.maps;
       if (!detailed.name) detailed.name = listing.name;
       return detailed;
-    }), 10000, "Places details timed out").catch(function () {
+    }), 10000, "Places details timed out", signal).catch(function (e) {
+      if (isAbortErr(e)) throw e;
       return listing;
     });
   }
 
-  function searchRest(op, wantReviews) {
+  function searchRest(op, wantReviews, signal) {
+    throwIfAborted(signal);
     var mask = "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.googleMapsUri";
     if (wantReviews) mask += ",places.reviews";
-    var bias = biasLatLng(op);
     var body = {
       textQuery: textQuery(op),
       maxResultCount: 1,
       languageCode: "en",
-      regionCode: "us",
-      locationBias: {
+      regionCode: "us"
+    };
+    var bias = austinBias(op);
+    if (bias) {
+      body.locationBias = {
         circle: {
           center: { latitude: bias.lat, longitude: bias.lng },
           radius: 40000
         }
-      }
-    };
-    return withTimeout(fetch("https://places.googleapis.com/v1/places:searchText", {
+      };
+    }
+    return withTimeout(fetchWithSignal("https://places.googleapis.com/v1/places:searchText", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -249,28 +303,35 @@
         "X-Goog-FieldMask": mask
       },
       body: JSON.stringify(body)
-    }).then(function (res) {
+    }, signal).then(function (res) {
       if (!res.ok) throw new Error("Places REST " + res.status);
       return res.json();
     }).then(function (data) {
       var p = data && data.places && data.places[0];
       return p ? listingFromRest(p) : null;
-    }), 10000, "Places REST timed out").then(function (listing) {
+    }), 10000, "Places REST timed out", signal).then(function (listing) {
+      throwIfAborted(signal);
       if (!listing || !wantReviews || hasQuotes(listing)) return listing;
-      return fetchRestDetails(listing);
+      return fetchRestDetails(listing, signal);
     });
   }
 
   function findGoogleListing(op, opts) {
     var wantReviews = !(opts && opts.reviews === false);
+    var signal = opts && opts.signal;
     var lastErr = null;
     var sawEmpty = false;
     function tryFn(fn) {
-      return fn().then(function (hit) {
+      return Promise.resolve().then(function () {
+        throwIfAborted(signal);
+        return fn();
+      }).then(function (hit) {
+        throwIfAborted(signal);
         if (hit) return hit;
         sawEmpty = true;
         return null;
       }).catch(function (e) {
+        if (isAbortErr(e)) throw e;
         lastErr = e;
         return null;
       });
@@ -280,19 +341,20 @@
       if (!wantReviews) return true;
       return hasQuotes(hit);
     }
-    return tryFn(function () { return searchRest(op, wantReviews); })
+    return tryFn(function () { return searchRest(op, wantReviews, signal); })
       .then(function (hit) {
         if (accept(hit)) return hit;
         var restHit = hit;
-        return tryFn(function () { return searchNew(op, wantReviews); }).then(function (jsHit) {
+        return tryFn(function () { return searchNew(op, wantReviews, signal); }).then(function (jsHit) {
           if (accept(jsHit)) return jsHit;
-          return tryFn(function () { return searchLegacy(op, wantReviews); }).then(function (leg) {
+          return tryFn(function () { return searchLegacy(op, wantReviews, signal); }).then(function (leg) {
             if (accept(leg)) return leg;
             return restHit || jsHit || leg || null;
           });
         });
       })
       .then(function (hit) {
+        throwIfAborted(signal);
         if (hit) return hit;
         if (sawEmpty) return null;
         if (lastErr) throw lastErr;

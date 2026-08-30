@@ -98,19 +98,12 @@ function riskHit(level, ageDays) {
   if (ageDays <= 730) return full / 2;
   return 0;
 }
-function reviewMod(google) {
-  if (!google || google.rating == null || !(google.count >= 8)) return 0;
-  if (google.rating >= 4.5 && google.count >= 10) return 5;
-  if (google.rating >= 4.0) return 3;
-  if (google.rating < 3.0) return -4;
-  return 0;
-}
-function gradeOf(op, defs, acts, google) {
+function gradeOf(op, defs, acts) {
   defs = defs || [];
   acts = acts || [];
-  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, reviews: 0, capped: false, uncorrectedHigh12: false };
+  if (!op) return { letter: "—", score: null, cls: "g-Z", label: "Unknown", safety: 0, inspect: 0, capped: false, uncorrectedHigh12: false };
   var closed = String(op.operation_status).toUpperCase() !== "Y" || String(op.temporarily_closed).toUpperCase() === "YES";
-  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, reviews: 0, capped: false, uncorrectedHigh12: false };
+  if (closed) return { letter: "—", score: null, cls: "g-Z", label: "Closed / inactive", safety: 0, inspect: 0, capped: false, uncorrectedHigh12: false };
   var safety = 0, uncorrectedHigh12 = false, i;
   for (i = 0; i < defs.length; i++) {
     var d = defs[i];
@@ -133,13 +126,12 @@ function gradeOf(op, defs, acts, google) {
   }
   inspect += Math.min(5, clean12);
   if (!any24) inspect -= 5;
-  var reviews = reviewMod(google);
-  var raw = 100 + safety + inspect + reviews;
+  var raw = 100 + safety + inspect;
   var capped = false;
   if (uncorrectedHigh12 && raw > 79) { raw = 79; capped = true; }
   var score = Math.max(0, Math.min(100, Math.round(raw)));
   var letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, reviews: reviews, capped: capped, uncorrectedHigh12: uncorrectedHigh12 };
+  return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, capped: capped, uncorrectedHigh12: uncorrectedHigh12 };
 }
 
 function zipOf(op) {
@@ -279,7 +271,7 @@ function cardHTML(op, hist) {
   hist = hist || { defs: {}, acts: {} };
   const id = String(op.operation_id || "");
   const acts = hist.acts[id] || [];
-  const g = gradeOf(op, hist.defs[id] || [], acts, null);
+  const g = gradeOf(op, hist.defs[id] || [], acts);
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
   const status = op.operation_status === "Y" ? "Open" : "Inactive";
   const cap = op.total_capacity || "—";
@@ -298,29 +290,63 @@ function cardHTML(op, hist) {
 }
 
 
+var googleFillGen = 0;
+var googleFillCtrl = null;
+
+function isAbortErr(e) {
+  return !!(e && (e.name === "AbortError" || String((e && e.message) || "").toLowerCase() === "aborted"));
+}
+
+function paintGoogleError(node) {
+  if (!node) return;
+  node.classList.add("is-empty");
+  node.classList.add("is-error");
+  node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-empty">Could not load</div>';
+}
+
 function fillGoogleRatings(ops) {
-  if (!ops || !ops.length || typeof findGoogleListing !== "function") return;
+  if (googleFillCtrl) {
+    try { googleFillCtrl.abort(); } catch (e) {}
+  }
+  googleFillCtrl = (typeof AbortController === "function") ? new AbortController() : null;
+  var gen = ++googleFillGen;
+  var signal = googleFillCtrl && googleFillCtrl.signal;
+  var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-google-card]"));
+  function live() { return gen === googleFillGen; }
+
+  if (typeof findGoogleListing !== "function") {
+    nodes.forEach(paintGoogleError);
+    return;
+  }
+  if (!ops || !ops.length) {
+    nodes.forEach(function (node) { paintGoogleBadge(node, null, null); });
+    return;
+  }
+
   var byId = {};
   ops.forEach(function (op) { byId[String(op.operation_id || "")] = op; });
-  var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-google-card]"));
   var i = 0;
   function next() {
+    if (!live()) return;
     if (i >= nodes.length) return;
     var node = nodes[i++];
     var op = byId[node.getAttribute("data-google-card")];
     if (!op) { paintGoogleBadge(node, null, null); return next(); }
-    findGoogleListing(op, { reviews: false }).then(function (listing) {
+    findGoogleListing(op, { reviews: false, signal: signal }).then(function (listing) {
+      if (!live()) return;
       if (listing && listing.rating != null) paintGoogleBadge(node, listing.rating, listing.count);
       else paintGoogleBadge(node, null, null);
-    }).catch(function () {
-      node.classList.add("is-empty");
-      node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div>';
+    }).catch(function (e) {
+      if (!live()) return;
+      if (isAbortErr(e)) return;
+      paintGoogleError(node);
     }).then(next);
   }
   next();
 }
 function paintGoogleBadge(node, rating, count) {
   if (!node) return;
+  node.classList.remove("is-error");
   if (rating == null) {
     node.classList.add("is-empty");
     node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-empty">No Google listing</div>';
