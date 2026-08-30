@@ -289,7 +289,7 @@ function cardHTML(op, hist) {
       <div class="ledger">${status}  ·  Cap ${escapeHtml(String(cap))}  ·  ${nIns} inspections  ·  last 24 months</div>
       <div class="ledger ledger-mix">${high}<span class="mix-pair">Safety ${signed(g.safety)}</span><span class="mix-pair">Visits ${signed(g.inspect)}</span></div>
     </div>
-    <aside class="exhibit" data-google-card="${escapeHtml(id)}"><div class="ex-kicker">Exhibit · Google</div></aside>
+    <aside class="exhibit is-empty" data-google-card="${escapeHtml(id)}"><div class="ex-kicker">Exhibit · Google</div></aside>
   </a>`;
 }
 

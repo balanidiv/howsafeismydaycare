@@ -96,10 +96,15 @@ nav a { text-decoration: none; color: var(--ink-2); }
   color: var(--stamp);
 }
 .double-hair {
-  height: 5px;
   margin-top: 8px;
   border-top: 1px solid var(--rule);
-  border-bottom: 1px solid rgba(28, 25, 20, 0.4);
+  padding-top: 3px;
+}
+.double-hair::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: rgba(28, 25, 20, 0.4);
 }
 .masthead h1, h1 {
   font-family: "Fraunces", Georgia, serif;
@@ -165,7 +170,7 @@ nav a { text-decoration: none; color: var(--ink-2); }
 .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
 
 .hints { color: var(--ink-2); font-size: 0.9rem; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.hints button {
+.hints button:not(.filed) {
   background: none;
   border: 0;
   padding: 0;
@@ -175,7 +180,7 @@ nav a { text-decoration: none; color: var(--ink-2); }
   text-underline-offset: 3px;
   cursor: pointer;
 }
-.filed {
+.hints button.filed, .filed {
   display: inline-block;
   border: 1.5px solid var(--stamp);
   color: var(--stamp);
@@ -494,6 +499,7 @@ a.official-bar:hover { color: var(--paper); background: var(--stamp); }
   padding: 14px 16px;
   margin-bottom: 8px;
 }
+.sheet strong { display: block; }
 .finding-head {
   display: flex;
   align-items: baseline;
@@ -536,10 +542,15 @@ a.official-bar:hover { color: var(--paper); background: var(--stamp); }
   padding-top: 0;
 }
 .g-rule {
-  height: 5px;
   margin: 28px 0 16px;
   border-top: 1px solid var(--rule);
-  border-bottom: 1px solid rgba(28, 25, 20, 0.4);
+  padding-top: 3px;
+}
+.g-rule::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: rgba(28, 25, 20, 0.4);
 }
 .g-kicker {
   font-size: 0.75rem;
