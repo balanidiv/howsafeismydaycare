@@ -13,9 +13,15 @@
     return String((op && op.zipcode) || "").replace(/\s+/g, " ").trim().slice(0, 5);
   }
 
+  function streetOf(op) {
+    var loc = String((op && op.location_address) || "").replace(/\s+/g, " ").trim();
+    var line = String((op && op.address_line) || "").replace(/\s+/g, " ").trim();
+    return loc || line;
+  }
+
   function textQuery(op) {
     var name = String((op && op.operation_name) || "").replace(/\s+/g, " ").trim();
-    var street = String((op && op.address_line) || "").replace(/\s+/g, " ").trim();
+    var street = streetOf(op);
     var city = String((op && op.city) || "").replace(/\s+/g, " ").trim();
     var st = String((op && op.state) || "TX").replace(/\s+/g, " ").trim() || "TX";
     var zip = zip5(op);
@@ -25,6 +31,7 @@
     if (city) parts.push(city);
     if (st) parts.push(st);
     if (zip) parts.push(zip);
+    parts.push("child care");
     return parts.join(", ");
   }
 
@@ -47,9 +54,16 @@
     });
   }
 
+  function hasQuotes(listing) {
+    var revs = listing && listing.reviews;
+    if (!Array.isArray(revs) || !revs.length) return false;
+    return revs.some(function (r) { return r && String(r.text || "").trim(); });
+  }
+
   function listingFromJsPlace(place) {
     if (!place) return null;
     return {
+      id: place.id,
       name: asText(place.displayName) || "",
       address: place.formattedAddress || "",
       rating: place.rating,
@@ -62,6 +76,7 @@
   function listingFromRest(p) {
     if (!p) return null;
     return {
+      id: p.id,
       name: asText(p.displayName) || "",
       address: p.formattedAddress || "",
       rating: p.rating,
@@ -156,7 +171,7 @@
   }
 
   function searchLegacy(op, wantReviews) {
-    return loadMapsJs().then(function () {
+    return withTimeout(loadMapsJs().then(function () {
       return google.maps.importLibrary("places");
     }).then(function () {
       return new Promise(function (resolve, reject) {
@@ -183,6 +198,30 @@
           });
         });
       });
+    }), 10000, "PlacesService timed out");
+  }
+
+  function fetchRestDetails(listing) {
+    if (!listing || !listing.id) return Promise.resolve(listing);
+    return withTimeout(fetch("https://places.googleapis.com/v1/places/" + encodeURIComponent(listing.id), {
+      headers: {
+        "X-Goog-Api-Key": KEY,
+        "X-Goog-FieldMask": "id,displayName,formattedAddress,rating,userRatingCount,googleMapsUri,reviews"
+      }
+    }).then(function (res) {
+      if (!res.ok) throw new Error("Places details " + res.status);
+      return res.json();
+    }).then(function (p) {
+      var detailed = listingFromRest(p);
+      if (!detailed) return listing;
+      if (!hasQuotes(detailed)) detailed.reviews = listing.reviews || [];
+      if (detailed.rating == null) detailed.rating = listing.rating;
+      if (detailed.count == null) detailed.count = listing.count;
+      if (!detailed.maps) detailed.maps = listing.maps;
+      if (!detailed.name) detailed.name = listing.name;
+      return detailed;
+    }), 10000, "Places details timed out").catch(function () {
+      return listing;
     });
   }
 
@@ -202,7 +241,7 @@
         }
       }
     };
-    return fetch("https://places.googleapis.com/v1/places:searchText", {
+    return withTimeout(fetch("https://places.googleapis.com/v1/places:searchText", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -216,6 +255,9 @@
     }).then(function (data) {
       var p = data && data.places && data.places[0];
       return p ? listingFromRest(p) : null;
+    }), 10000, "Places REST timed out").then(function (listing) {
+      if (!listing || !wantReviews || hasQuotes(listing)) return listing;
+      return fetchRestDetails(listing);
     });
   }
 
@@ -233,9 +275,23 @@
         return null;
       });
     }
+    function accept(hit) {
+      if (!hit) return false;
+      if (!wantReviews) return true;
+      return hasQuotes(hit);
+    }
     return tryFn(function () { return searchRest(op, wantReviews); })
-      .then(function (hit) { return hit || tryFn(function () { return searchNew(op, wantReviews); }); })
-      .then(function (hit) { return hit || tryFn(function () { return searchLegacy(op, wantReviews); }); })
+      .then(function (hit) {
+        if (accept(hit)) return hit;
+        var restHit = hit;
+        return tryFn(function () { return searchNew(op, wantReviews); }).then(function (jsHit) {
+          if (accept(jsHit)) return jsHit;
+          return tryFn(function () { return searchLegacy(op, wantReviews); }).then(function (leg) {
+            if (accept(leg)) return leg;
+            return restHit || jsHit || leg || null;
+          });
+        });
+      })
       .then(function (hit) {
         if (hit) return hit;
         if (sawEmpty) return null;
