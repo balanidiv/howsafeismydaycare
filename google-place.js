@@ -235,9 +235,16 @@
         if (!place) return null;
         if (!wantReviews || typeof place.fetchFields !== "function") return listingFromJsPlace(place);
         return place.fetchFields({
-          fields: ["displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"]
+          fields: ["id", "displayName", "formattedAddress", "rating", "userRatingCount", "reviews", "googleMapsURI"]
         }).then(function (out) {
-          return listingFromJsPlace((out && out.place) || place);
+          var listing = listingFromJsPlace(place);
+          var extra = (out && out.place) ? listingFromJsPlace(out.place) : null;
+          if (extra) {
+            extra.id = extra.id || listing.id || place.id;
+            listing = fillListing(listing, extra);
+          }
+          if (listing && !listing.id && place.id) listing.id = place.id;
+          return listing;
         }).catch(function () {
           return listingFromJsPlace(place);
         });

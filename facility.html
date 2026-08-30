@@ -267,7 +267,9 @@ function gradeOf(op, defs, acts) {
         finish(googleShell("<p class=\"muted\">No Google listing matched this name and city. Live, not stored.</p>"));
         return;
       }
-      var reviews = listing.reviews || [];
+      var reviews = (listing.reviews || []).filter(function (rev) {
+        return String((rev && rev.text) || "").trim();
+      });
       var quotes = reviews.map(function (rev) {
         return '<blockquote class="clip-quote"><strong>' + escapeHtml(rev.author) + " " + stars(rev.rating) +
           ' <span class="muted">' + escapeHtml(rev.when || "") +
