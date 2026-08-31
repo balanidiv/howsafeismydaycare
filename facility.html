@@ -6,29 +6,26 @@
   <title>Facility · How Safe Is My Daycare?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;1,6..72,700&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,650&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;650;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="google-place.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header class="paper-head">
-      <nav class="topline">
+  <header class="chrome">
+    <div class="wrap chrome-inner">
+      <a class="logo" href="index.html">How <em>safe</em> is my daycare?</a>
+      <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="drawer" id="drawer">
+      <div class="wrap">
         <a href="about.html">How this works</a>
         <a href="https://divy.am" rel="noopener">Div Balani</a>
-      </nav>
-      <a class="mark" href="index.html">How <em>safe</em> is my daycare?</a>
-      <div class="mast-rules">
-        <div class="rule-3" aria-hidden="true"></div>
-        <div class="rule-1" aria-hidden="true"></div>
-        <div class="mast-meta">
-          <span>Texas HHSC Child Care Licensing</span>
-          <span>Austin default · Travis County</span>
-          <span>Not an official state rating</span>
-        </div>
-        <div class="rule-double" aria-hidden="true"></div>
       </div>
-    </header>
+    </nav>
+  </header>
+  <div class="wrap">
     <div class="page" id="app">
       <p class="muted" id="load-status">Opening the official record from Texas HHSC…</p>
     </div>
@@ -41,6 +38,15 @@
   </footer>
   <script>
 (function () {
+  var chrome = document.querySelector(".chrome");
+  var btn = document.getElementById("burger");
+  if (chrome && btn) {
+    btn.addEventListener("click", function () {
+      var open = chrome.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+
   var app = document.getElementById("app");
   var rendered = false;
 
@@ -157,20 +163,56 @@ function gradeOf(op, defs, acts) {
   return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, capped: capped, uncorrectedHigh12: uncorrectedHigh12 };
 }
 
+  function hasHigh(defs) {
+    var i;
+    for (i = 0; i < (defs || []).length; i++) {
+      var d = defs[i];
+      if (String(d.standard_risk_level) !== "High") continue;
+      var age = daysAgo(defWhen(d));
+      if (age == null || age <= 730) return true;
+    }
+    return false;
+  }
+
+  function gradeDriver(g, defs, acts) {
+    if (!g || g.letter === "—" || g.cls === "g-Z") return (g && g.label) || "Closed or inactive.";
+    var high12 = 0, high24 = 0, openHigh = 0, any24 = false, i;
+    for (i = 0; i < (defs || []).length; i++) {
+      var d = defs[i];
+      if (String(d.standard_risk_level) !== "High") continue;
+      var age = daysAgo(defWhen(d));
+      if (age != null && age > 730) continue;
+      high24 += 1;
+      if (age == null || age <= 365) {
+        high12 += 1;
+        if (isUncorrected(d)) openHigh += 1;
+      }
+    }
+    for (i = 0; i < (acts || []).length; i++) {
+      var aage = daysAgo(acts[i].activity_date);
+      if (aage != null && aage <= 730) any24 = true;
+    }
+    if (g.uncorrectedHigh12 || openHigh) return "Uncorrected High this year.";
+    if (high12) return "High finding in the last 12 months.";
+    if (high24) return "High finding in the last 24 months.";
+    if (!any24) return "No inspections in 24 months.";
+    if (!high24) return "No High in 24 months.";
+    return "Findings in the last 24 months.";
+  }
+
   function mixHTML(g) {
     var cap = g.capped
-      ? "This file is capped at 79. Uncorrected High in the last year cannot be erased. Google is a separate exhibit."
-      : "Parent-perspective mix from the HHSC file. Google is a separate exhibit.";
-    return '<div id="grade-mix"><table class="mix-ledger"><thead><tr>' +
-      "<th>Safety</th><th>Inspections</th></tr></thead><tbody><tr>" +
-      "<td>" + signed(g.safety) + "</td>" +
-      "<td>" + signed(g.inspect) + "</td></tr></tbody></table>" +
-      '<p class="mix-cap">' + cap + "</p></div>";
+      ? '<p class="mix-cap">This file is capped at 79. Uncorrected High in the last year cannot be erased. Google is a separate exhibit.</p>'
+      : "";
+    return '<div id="grade-mix" class="mix-quiet">' +
+      "<div><b>" + signed(g.safety) + "</b><span>Safety</span></div>" +
+      "<div><b>" + signed(g.inspect) + "</b><span>Inspections</span></div>" +
+      '<div class="mix-google"><b id="mix-google-num">—</b><span>Google</span></div></div>' + cap;
   }
-  function stampEl(g) {
-    return '<div class="stamp stamp-lg ' + g.cls + '" title="' + escapeHtml(g.label) +
-      '"><div class="stamp-core"><span class="stamp-letter">' + escapeHtml(g.letter) +
-      "</span><small>24 MO</small></div></div>";
+  function tileEl(g, defs, acts) {
+    return '<div class="card-grade"><div class="grade-tile grade-lg ' + g.cls + '" title="' +
+      escapeHtml(g.label) + '">' + escapeHtml(g.letter) + '</div><p class="grade-driver">' +
+      escapeHtml(gradeDriver(g, defs, acts)) + "</p></div>";
   }
 
   function fetchJson(url, ms) {
@@ -225,6 +267,12 @@ function gradeOf(op, defs, acts) {
     return "risk";
   }
 
+  function riskLabel(level) {
+    var l = String(level || "n/a");
+    if (l === "High") return "HIGH";
+    return l;
+  }
+
   function stars(n) {
     var r = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
     return '<span class="stars">' + "★".repeat(r) + "☆".repeat(5 - r) + "</span>";
@@ -237,37 +285,46 @@ function gradeOf(op, defs, acts) {
     return "";
   }
 
-  function googleShell(inner) {
-    return '<div class="g-rule" aria-hidden="true"></div>' +
-      '<div class="clip-sheet"><div class="g-kicker">Third-party sentiment · not part of the letter</div>' +
-      inner + "</div>";
+  function googleShell(inner, mode) {
+    var live = mode === "live";
+    var cls = live ? "g-sheet" : "g-sheet is-empty";
+    var kicker = live ? '<div class="g-kicker">GOOGLE · NOT PART OF THE LETTER</div>' : "";
+    return '<div class="' + cls + '">' + kicker + inner + "</div>";
+  }
+
+  function setMixGoogle(listing) {
+    var el = document.getElementById("mix-google-num");
+    if (!el) return;
+    if (listing && listing.rating != null) el.textContent = Number(listing.rating).toFixed(1);
+    else el.textContent = "—";
   }
 
   function loadGoogleReviews(op, mount) {
     var done = false;
     var timer;
     var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
-    function finish(html) {
+    function finish(html, listing) {
       if (done) return;
       done = true;
       if (timer) clearTimeout(timer);
       mount.innerHTML = html;
+      setMixGoogle(listing || null);
     }
-    mount.innerHTML = googleShell("<p class=\"muted\">Pulling live from Google. Not stored.</p>");
+    mount.innerHTML = googleShell("<p class=\"muted\">Pulling live from Google. Not stored.</p>", "empty");
     timer = setTimeout(function () {
       if (ctrl) {
         try { ctrl.abort(); } catch (e) {}
       }
-      finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
+      finish(googleShell("<p class=\"g-empty\">Could not load Google reviews right now.</p>", "error"));
     }, 45000);
     if (typeof findGoogleListing !== "function") {
-      finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
+      finish(googleShell("<p class=\"g-empty\">Could not load Google reviews right now.</p>", "error"));
       return;
     }
     findGoogleListing(op, { reviews: true, signal: ctrl && ctrl.signal }).then(function (listing) {
       if (done) return;
       if (!listing) {
-        finish(googleShell("<p class=\"muted\">No Google listing matched this name and city. Live, not stored.</p>"));
+        finish(googleShell("<p class=\"g-empty\">No Google listing.</p>", "empty"));
         return;
       }
       var reviews = (listing.reviews || []).filter(function (rev) {
@@ -288,11 +345,13 @@ function gradeOf(op, defs, acts) {
           "</div>" +
           (listing.maps ? '<p><a class="source-link" href="' + listing.maps + '" target="_blank" rel="noopener">See all on Google</a></p>' : "") +
           (quotes || "<p class=\"muted\">Google returned a listing but no review text.</p>") +
-          "<p class=\"muted\">Live from Google for this page load. Not stored. Not part of the letter.</p>"
-        )
+          "<p class=\"muted\">Live from Google for this page load. Not stored. Not part of the letter.</p>",
+          "live"
+        ),
+        listing
       );
     }).catch(function () {
-      finish(googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>"));
+      finish(googleShell("<p class=\"g-empty\">Could not load Google reviews right now.</p>", "error"));
     });
   }
 
@@ -339,7 +398,7 @@ function gradeOf(op, defs, acts) {
       var openHigh = String(d.standard_risk_level) === "High" && isUncorrected(d);
       return '<div class="finding' + (openHigh ? " is-open-high" : "") + '"><div class="finding-head"><strong>' +
         escapeHtml(d.standard_number_description || "Standard") + '</strong><span class="' +
-        riskClass(d.standard_risk_level) + '">' + escapeHtml(d.standard_risk_level || "n/a") +
+        riskClass(d.standard_risk_level) + '">' + escapeHtml(riskLabel(d.standard_risk_level)) +
         "</span></div>" + (d.narrative ? "<p>" + escapeHtml(d.narrative) + "</p>" : "") +
         '<div class="muted">Corrected at inspection: ' +
         escapeHtml(d.corrected_at_inspection || "—") + " · Corrected " + escapeHtml(fmtDate(d.corrected_date)) +
@@ -347,39 +406,35 @@ function gradeOf(op, defs, acts) {
     }).join("") : '<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>';
 
     var num = op.operation_number || op.operation_id;
+    var high = hasHigh(defs) ? '<div class="high-word">HIGH</div>' : "";
     app.innerHTML =
       '<div class="crumb"><a href="index.html">Search</a> / ' + escapeHtml(op.city || "Texas") + "</div>" +
-      '<div class="folder-head"><div class="title-row"><div>' +
+      '<div class="folder-head"><div class="title-row">' + tileEl(g, defs, acts) + "<div>" +
       '<div class="kicker">' + escapeHtml(op.operation_type || "") + " · #" +
       escapeHtml(String(num)) + " · " + escapeHtml(op.city || "Texas") + " TX" + (zip ? " " + zip : "") + "</div>" +
       "<h1>" + escapeHtml(op.operation_name || "Facility") + "</h1>" +
-      (g.uncorrectedHigh12 ? '<div class="ledger ledger-mix"><span class="high-mark">High</span></div>' : "") +
+      high +
       '<p class="muted">' + escapeHtml(op.location_address || "") + (zip ? " · " + zip : "") + "</p>" +
-      "</div>" + stampEl(g) + "</div></div>" +
+      "</div></div></div>" +
       '<a class="official-bar" href="' + hhsc + '" target="_blank" rel="noopener">Open the official HHSC file</a>' +
       mixHTML(g) +
-      '<div class="stats">' +
-      '<div class="stat"><b>' + (op.operation_status === "Y" ? "Open" : "Inactive") + "</b><span>License status</span></div>" +
-      '<div class="stat"><b>' + escapeHtml(op.total_capacity || "—") + "</b><span>Licensed capacity</span></div>" +
-      '<div class="stat"><b>' + escapeHtml(op.licensed_to_serve_ages || "—") + "</b><span>Ages</span></div>" +
-      '<div class="stat"><b>' + escapeHtml(op.total_inspections || "0") + "</b><span>Inspections on file</span></div>" +
-      '<div class="stat"><b>' + escapeHtml(op.type_of_issuance || "—") + "</b><span>Issuance</span></div>" +
-      '<div class="stat"><b>' + escapeHtml(fmtDate(op.issuance_date)) + "</b><span>Issued</span></div>" +
-      "</div>" +
-      '<p class="muted">Hours ' + escapeHtml(op.hours_of_operation || "—") + " · " +
+      '<div class="g-section" id="google-reviews"></div>' +
+      '<div class="facts"><p>' +
+      (op.operation_status === "Y" ? "Open" : "Inactive") +
+      " · Capacity " + escapeHtml(op.total_capacity || "—") +
+      " · Ages " + escapeHtml(op.licensed_to_serve_ages || "—") +
+      " · " + escapeHtml(op.total_inspections || "0") + " inspections on file</p>" +
+      "<p>Hours " + escapeHtml(op.hours_of_operation || "—") + " · " +
       escapeHtml(op.days_of_operation || "") + " · Adverse action: " +
       escapeHtml(op.adverse_action || "—") + " · Corrective action: " +
-      escapeHtml(op.corrective_action || "—") + "</p>" +
+      escapeHtml(op.corrective_action || "—") + "</p></div>" +
       '<div class="section"><h2>Inspections</h2>' + inspectHtml + "</div>" +
       '<div class="section"><h2>Findings</h2>' + defHtml + "</div>";
 
     rendered = true;
-    var gMount = document.createElement("div");
-    gMount.className = "g-section";
-    gMount.id = "google-reviews";
-    app.appendChild(gMount);
+    var gMount = document.getElementById("google-reviews");
     try { loadGoogleReviews(op, gMount); } catch (e) {
-      gMount.innerHTML = googleShell("<p class=\"muted\">Could not load Google reviews right now.</p>");
+      gMount.innerHTML = googleShell("<p class=\"g-empty\">Could not load Google reviews right now.</p>", "error");
     }
   }
 

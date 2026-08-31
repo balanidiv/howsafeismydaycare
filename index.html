@@ -9,48 +9,50 @@
   <meta property="og:description" content="Public inspection and licensing records for Texas daycares, readable in one place." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;1,6..72,700&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,650&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;650;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="google-place.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header class="paper-head">
-      <nav class="topline">
+  <header class="chrome">
+    <div class="wrap chrome-inner">
+      <a class="logo" href="index.html">How <em>safe</em> is my daycare?</a>
+      <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="drawer" id="drawer">
+      <div class="wrap">
         <a href="about.html">How this works</a>
         <a href="https://divy.am" rel="noopener">Div Balani</a>
-      </nav>
-      <a class="mark" href="index.html">How <em>safe</em> is my daycare?</a>
-      <div class="mast-rules">
-        <div class="rule-3" aria-hidden="true"></div>
-        <div class="rule-1" aria-hidden="true"></div>
-        <div class="mast-meta">
-          <span>Texas HHSC Child Care Licensing</span>
-          <span>Austin default · Travis County</span>
-          <span>Not an official state rating</span>
-        </div>
-        <div class="rule-double" aria-hidden="true"></div>
       </div>
-    </header>
+    </nav>
+  </header>
 
+  <div class="wrap page-head">
     <section class="search-block">
       <form class="search" id="form">
-        <label for="q">Look up a licensed operation</label>
-        <div class="search-row">
-          <input id="q" type="search" placeholder="Try Austin, 78704, or a center name" autocomplete="off" />
-          <button type="submit">Search the record</button>
+        <label for="q">Search by name, city, or ZIP</label>
+        <div class="search-pill">
+          <input id="q" type="search" placeholder="Search by name, city, or ZIP" autocomplete="off" />
+          <button type="submit">Search</button>
         </div>
       </form>
       <p class="hints">
-        <button type="button" class="filed" data-q="Austin">Filed for Austin</button>
-        <button type="button" data-q="78704">78704</button>
         <button type="button" data-q="Montessori">Montessori</button>
+        <button type="button" data-q="Austin">Austin</button>
+        <button type="button" data-q="78704">78704</button>
       </p>
     </section>
-
-    <div id="status" class="status">Opening the Austin file…</div>
+    <div id="status" class="status">Austin default · last 24 months · not a state rating</div>
     <div id="err"></div>
-    <div id="results" class="grid"></div>
+  </div>
+
+  <div class="wrap">
+    <div class="stage">
+      <div id="map" class="map-pane" role="region" aria-label="Map of matching daycares">Loading map…</div>
+      <div id="results" class="list-pane"></div>
+    </div>
   </div>
   <footer>
     <div class="wrap">
@@ -70,6 +72,18 @@ const DAYCARE_TYPES = [
   "Listed Family Home",
 ];
 const TYPE_SQL = DAYCARE_TYPES.map((t) => `'${t}'`).join(",");
+const AUSTIN = { lat: 30.2672, lng: -97.7431 };
+const MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#f6f5f2" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#1a1a1a" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f6f5f2" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#f0ece4" }] },
+  { featureType: "water", stylers: [{ color: "#d7e3ee" }] },
+  { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#e8e4dc" }] }
+];
 
 
 function daysAgo(raw) {
@@ -243,9 +257,41 @@ function signed(n) {
   return "0";
 }
 
-function stampEl(g) {
-  return '<div class="stamp ' + g.cls + '" title="' + escapeHtml(g.label) + '"><div class="stamp-core"><span class="stamp-letter">' +
-    escapeHtml(g.letter) + "</span><small>24 MO</small></div></div>";
+function hasHigh(defs) {
+  var i;
+  for (i = 0; i < (defs || []).length; i++) {
+    var d = defs[i];
+    if (String(d.standard_risk_level) !== "High") continue;
+    var age = daysAgo(defWhen(d));
+    if (age == null || age <= 730) return true;
+  }
+  return false;
+}
+
+function gradeDriver(g, defs, acts) {
+  if (!g || g.letter === "—" || g.cls === "g-Z") return (g && g.label) || "Closed or inactive.";
+  var high12 = 0, high24 = 0, openHigh = 0, any24 = false, i;
+  for (i = 0; i < (defs || []).length; i++) {
+    var d = defs[i];
+    if (String(d.standard_risk_level) !== "High") continue;
+    var age = daysAgo(defWhen(d));
+    if (age != null && age > 730) continue;
+    high24 += 1;
+    if (age == null || age <= 365) {
+      high12 += 1;
+      if (isUncorrected(d)) openHigh += 1;
+    }
+  }
+  for (i = 0; i < (acts || []).length; i++) {
+    var aage = daysAgo(acts[i].activity_date);
+    if (aage != null && aage <= 730) any24 = true;
+  }
+  if (g.uncorrectedHigh12 || openHigh) return "Uncorrected High this year.";
+  if (high12) return "High finding in the last 12 months.";
+  if (high24) return "High finding in the last 24 months.";
+  if (!any24) return "No inspections in 24 months.";
+  if (!high24) return "No High in 24 months.";
+  return "Findings in the last 24 months.";
 }
 
 function licenseKicker(op) {
@@ -271,22 +317,24 @@ function cardHTML(op, hist) {
   hist = hist || { defs: {}, acts: {} };
   const id = String(op.operation_id || "");
   const acts = hist.acts[id] || [];
-  const g = gradeOf(op, hist.defs[id] || [], acts);
+  const defs = hist.defs[id] || [];
+  const g = gradeOf(op, defs, acts);
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
-  const status = op.operation_status === "Y" ? "Open" : "Inactive";
-  const cap = op.total_capacity || "—";
-  const nIns = inspectCount24(acts);
-  const high = g.uncorrectedHigh12 ? '<span class="high-mark">High</span>' : "";
-  return `<a class="file" href="${href}">
-    ${stampEl(g)}
-    <div>
+  const high = hasHigh(defs) ? '<div class="high-word">HIGH</div>' : "";
+  const driver = gradeDriver(g, defs, acts);
+  return `<article class="card" data-card="${escapeHtml(id)}">
+    <div class="card-grade">
+      <div class="grade-tile ${g.cls}" title="${escapeHtml(g.label)}">${escapeHtml(g.letter)}</div>
+      <p class="grade-driver">${escapeHtml(driver)}</p>
+    </div>
+    <div class="card-main">
       <h2>${escapeHtml(op.operation_name || "Unnamed facility")}</h2>
       <div class="file-kicker">${escapeHtml(licenseKicker(op))}</div>
-      <div class="ledger">${status}  ·  Cap ${escapeHtml(String(cap))}  ·  ${nIns} inspections  ·  last 24 months</div>
-      <div class="ledger ledger-mix">${high}<span class="mix-pair">Safety ${signed(g.safety)}</span><span class="mix-pair">Visits ${signed(g.inspect)}</span></div>
+      ${high}
+      <aside class="g-badge is-empty" data-google-card="${escapeHtml(id)}"></aside>
+      <a class="learn" href="${href}">Learn more →</a>
     </div>
-    <aside class="exhibit is-empty" data-google-card="${escapeHtml(id)}"><div class="ex-kicker">Exhibit · Google</div></aside>
-  </a>`;
+  </article>`;
 }
 
 
@@ -301,7 +349,7 @@ function paintGoogleError(node) {
   if (!node) return;
   node.classList.add("is-empty");
   node.classList.add("is-error");
-  node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-empty">Could not load</div>';
+  node.innerHTML = '<div class="ex-empty">Could not load</div>';
 }
 
 function fillGoogleRatings(ops) {
@@ -348,7 +396,7 @@ function paintGoogleBadge(node, listing) {
   node.classList.remove("is-error");
   if (!listing) {
     node.classList.add("is-empty");
-    node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-empty">No Google listing</div>';
+    node.innerHTML = '<div class="ex-empty">No Google listing.</div>';
     return;
   }
   node.classList.remove("is-empty");
@@ -357,8 +405,8 @@ function paintGoogleBadge(node, listing) {
   var num = (rating != null) ? Number(rating).toFixed(1) : "—";
   var r = (rating != null) ? Math.max(0, Math.min(5, Math.round(Number(rating) || 0))) : 0;
   var starRow = "★".repeat(r) + "☆".repeat(5 - r);
-  var n = (count != null) ? (count + " reviews") : "";
-  node.innerHTML = '<div class="ex-kicker">Exhibit · Google</div><div class="ex-num">' + num +
+  var n = (count != null) ? String(count) : "";
+  node.innerHTML = '<div class="ex-kicker">GOOGLE</div><div class="ex-num">' + num +
     '</div><div class="ex-stars">' + starRow + '</div><div class="ex-n">' + n + "</div>";
 }
 
@@ -373,6 +421,174 @@ function escapeHtml(s) {
   }[c]));
 }
 
+function pinColor(letter) {
+  if (letter === "A") return "#2f4a3c";
+  if (letter === "B") return "#3f5e4e";
+  if (letter === "C") return "#c47b1a";
+  if (letter === "D") return "#9a4a12";
+  if (letter === "F") return "#b42318";
+  return "#1a1a1a";
+}
+
+function pinIcon(letter, color) {
+  var safe = String(letter || "—").slice(0, 1);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28">' +
+    '<rect x="1" y="1" width="26" height="26" rx="6" fill="' + color + '"/>' +
+    '<text x="14" y="19.5" text-anchor="middle" fill="#ffffff" font-family="Outfit,Arial,sans-serif" font-size="14" font-weight="700">' +
+    safe + "</text></svg>";
+  return {
+    url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(28, 28),
+    anchor: new google.maps.Point(14, 14)
+  };
+}
+
+function geoQuery(op) {
+  var street = String((op && op.address_line) || "").replace(/\s+/g, " ").trim();
+  var city = String((op && op.city) || "").replace(/\s+/g, " ").trim();
+  var st = String((op && op.state) || "TX").replace(/\s+/g, " ").trim() || "TX";
+  var zip = zipOf(op);
+  if (street) return [street, city, st, zip].filter(Boolean).join(", ");
+  return String((op && op.location_address) || "").replace(/\s+/g, " ").trim();
+}
+
+var mapObj = null;
+var geocoder = null;
+var mapMarkers = [];
+var geoCache = {};
+var mapGen = 0;
+var mapFailed = false;
+
+function failMap(msg) {
+  mapFailed = true;
+  var el = document.getElementById("map");
+  if (el) el.textContent = msg || "Map could not load.";
+}
+
+function ensureMap() {
+  if (mapFailed) return Promise.resolve(null);
+  if (mapObj) return Promise.resolve(mapObj);
+  if (typeof loadGoogleMaps !== "function") {
+    failMap("Map could not load.");
+    return Promise.resolve(null);
+  }
+  return loadGoogleMaps().then(function () {
+    if (!google || !google.maps) throw new Error("maps missing");
+    var el = document.getElementById("map");
+    el.textContent = "";
+    mapObj = new google.maps.Map(el, {
+      center: AUSTIN,
+      zoom: 11,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+      clickableIcons: false,
+      styles: MAP_STYLE
+    });
+    geocoder = new google.maps.Geocoder();
+    return mapObj;
+  }).catch(function () {
+    failMap("Map could not load.");
+    return null;
+  });
+}
+
+function geocodeOp(op) {
+  var q = geoQuery(op);
+  if (!q || !geocoder) return Promise.resolve(null);
+  if (geoCache[q]) return Promise.resolve(geoCache[q]);
+  return new Promise(function (resolve) {
+    geocoder.geocode({ address: q, componentRestrictions: { country: "US" } }, function (res, status) {
+      if (status === "OK" && res && res[0]) {
+        geoCache[q] = res[0].geometry.location;
+        resolve(geoCache[q]);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+function mapLimit(items, n, fn) {
+  var i = 0, active = 0;
+  return new Promise(function (resolve) {
+    function next() {
+      if (i >= items.length && active === 0) { resolve(); return; }
+      while (active < n && i < items.length) {
+        (function (idx) {
+          active += 1;
+          Promise.resolve(fn(items[idx], idx)).catch(function () {}).then(function () {
+            active -= 1;
+            next();
+          });
+        })(i++);
+      }
+    }
+    if (!items.length) resolve();
+    else next();
+  });
+}
+
+function clearMarkers() {
+  mapMarkers.forEach(function (mk) { mk.setMap(null); });
+  mapMarkers = [];
+}
+
+function syncMap(rows, hist) {
+  var gen = ++mapGen;
+  clearMarkers();
+  ensureMap().then(function (m) {
+    if (!m || gen !== mapGen) return;
+    var bounds = new google.maps.LatLngBounds();
+    return mapLimit(rows || [], 4, function (op) {
+      if (gen !== mapGen) return;
+      return geocodeOp(op).then(function (loc) {
+        if (!loc || gen !== mapGen) return;
+        var id = String(op.operation_id || "");
+        var g = gradeOf(op, (hist.defs && hist.defs[id]) || [], (hist.acts && hist.acts[id]) || []);
+        var mk = new google.maps.Marker({
+          map: m,
+          position: loc,
+          icon: pinIcon(g.letter, pinColor(g.letter)),
+          title: op.operation_name || "",
+          optimized: true
+        });
+        mk.addListener("click", function () {
+          var card = document.querySelector('[data-card="' + id + '"]');
+          if (card) {
+            card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            card.classList.add("is-focus");
+            setTimeout(function () { card.classList.remove("is-focus"); }, 1400);
+          }
+        });
+        mapMarkers.push(mk);
+        bounds.extend(loc);
+      });
+    }).then(function () {
+      if (gen !== mapGen) return;
+      if (mapMarkers.length === 1) {
+        m.setCenter(mapMarkers[0].getPosition());
+        m.setZoom(13);
+      } else if (mapMarkers.length > 1) {
+        m.fitBounds(bounds, 48);
+      } else {
+        m.setCenter(AUSTIN);
+        m.setZoom(11);
+      }
+    });
+  });
+}
+
+function bindChrome() {
+  var chrome = document.querySelector(".chrome");
+  var btn = document.getElementById("burger");
+  if (!chrome || !btn) return;
+  btn.addEventListener("click", function () {
+    var open = chrome.classList.toggle("is-open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+}
+
 </script>
 <script>
     const form = document.getElementById("form");
@@ -381,19 +597,26 @@ function escapeHtml(s) {
     const results = document.getElementById("results");
     const err = document.getElementById("err");
 
+    bindChrome();
+    ensureMap();
+
     async function run(q) {
       err.innerHTML = "";
-      status.textContent = "Opening the record…";
+      status.textContent = "Looking up licensed operations…";
       results.innerHTML = "";
+      clearMarkers();
       try {
         const rows = await searchFacilities(q);
         const hist = await loadHistory(rows.map((r) => r.operation_id));
-        const place = q && q.trim() ? q.trim() : "Austin";
+        const filtered = !!(q && q.trim());
         status.textContent = rows.length
-          ? `24-month HHSC file · ${place}`
-          : `No licensed operations matched ${place}.`;
+          ? (filtered
+            ? (rows.length + " matches · map shows only these")
+            : "Austin default · last 24 months · not a state rating")
+          : ("No licensed operations matched " + (filtered ? q.trim() : "Austin") + ".");
         results.innerHTML = rows.map((op) => cardHTML(op, hist)).join("");
         fillGoogleRatings(rows);
+        syncMap(rows, hist);
       } catch (e) {
         status.textContent = "";
         err.innerHTML = `<div class="err">${e.message}. The Texas open-data API may be rate-limiting. Try again in a moment.</div>`;

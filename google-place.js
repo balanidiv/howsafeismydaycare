@@ -403,5 +403,6 @@
       });
   }
 
+  global.loadGoogleMaps = loadMapsJs;
   global.findGoogleListing = findGoogleListing;
 })(window);

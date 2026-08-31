@@ -6,28 +6,25 @@
   <title>How this works · How Safe Is My Daycare?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,700;1,6..72,700&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,650&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;650;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="wrap">
-    <header class="paper-head">
-      <nav class="topline">
+  <header class="chrome">
+    <div class="wrap chrome-inner">
+      <a class="logo" href="index.html">How <em>safe</em> is my daycare?</a>
+      <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="drawer" id="drawer">
+      <div class="wrap">
         <a href="about.html">How this works</a>
         <a href="https://divy.am" rel="noopener">Div Balani</a>
-      </nav>
-      <a class="mark" href="index.html">How <em>safe</em> is my daycare?</a>
-      <div class="mast-rules">
-        <div class="rule-3" aria-hidden="true"></div>
-        <div class="rule-1" aria-hidden="true"></div>
-        <div class="mast-meta">
-          <span>Texas HHSC Child Care Licensing</span>
-          <span>Austin default · Travis County</span>
-          <span>Not an official state rating</span>
-        </div>
-        <div class="rule-double" aria-hidden="true"></div>
       </div>
-    </header>
+    </nav>
+  </header>
+  <div class="wrap">
     <article class="page prose">
       <div class="kicker">Methodology</div>
       <h1>Public records, one search box.</h1>
@@ -62,9 +59,9 @@
           <tr><td>Inactive or temporarily closed</td><td>No letter</td></tr>
         </tbody>
       </table>
-      <p>A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below. Each page shows the mix — safety and inspections — so the letter is made, not magicked.</p>
+      <p>A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below. Each page shows the mix — safety and inspections — so the letter is made, not magicked. Google sits in its own labeled exhibit and does not change those numbers.</p>
       <h2>Google reviews</h2>
-      <p>Search rows and facility pages may show a live Google clipping: stars, and on the facility page up to five review quotes. Those reviews are not saved. They are an exhibit, not a substitute for the HHSC file, and they do not change the stamp or the mix numbers.</p>
+      <p>Search cards and facility pages may show a live Google exhibit: a rating, stars, and on the facility page up to five review quotes. Those reviews are not saved. They are not a substitute for the HHSC file, and they do not change the letter or the mix numbers.</p>
 
       <h2>Limits</h2>
       <ul>
@@ -83,5 +80,16 @@
       <div><a href="index.html">Back to search</a></div>
     </div>
   </footer>
+  <script>
+    (function () {
+      var chrome = document.querySelector(".chrome");
+      var btn = document.getElementById("burger");
+      if (!chrome || !btn) return;
+      btn.addEventListener("click", function () {
+        var open = chrome.classList.toggle("is-open");
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    })();
+  </script>
 </body>
 </html>
