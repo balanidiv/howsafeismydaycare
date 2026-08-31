@@ -163,17 +163,6 @@ function gradeOf(op, defs, acts) {
   return { letter: letter, score: score, cls: "g-" + letter, label: score + " / 100", safety: Math.round(safety), inspect: inspect, capped: capped, uncorrectedHigh12: uncorrectedHigh12 };
 }
 
-  function hasHigh(defs) {
-    var i;
-    for (i = 0; i < (defs || []).length; i++) {
-      var d = defs[i];
-      if (String(d.standard_risk_level) !== "High") continue;
-      var age = daysAgo(defWhen(d));
-      if (age == null || age <= 730) return true;
-    }
-    return false;
-  }
-
   function gradeDriver(g, defs, acts) {
     if (!g || g.letter === "—" || g.cls === "g-Z") return (g && g.label) || "Closed or inactive.";
     var high12 = 0, high24 = 0, openHigh = 0, any24 = false, i;
@@ -406,7 +395,7 @@ function gradeOf(op, defs, acts) {
     }).join("") : '<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>';
 
     var num = op.operation_number || op.operation_id;
-    var high = hasHigh(defs) ? '<div class="high-word">HIGH</div>' : "";
+    var high = g.uncorrectedHigh12 ? '<div class="high-word">HIGH</div>' : "";
     app.innerHTML =
       '<div class="crumb"><a href="index.html">Search</a> / ' + escapeHtml(op.city || "Texas") + "</div>" +
       '<div class="folder-head"><div class="title-row">' + tileEl(g, defs, acts) + "<div>" +

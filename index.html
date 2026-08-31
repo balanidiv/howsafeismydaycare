@@ -257,17 +257,6 @@ function signed(n) {
   return "0";
 }
 
-function hasHigh(defs) {
-  var i;
-  for (i = 0; i < (defs || []).length; i++) {
-    var d = defs[i];
-    if (String(d.standard_risk_level) !== "High") continue;
-    var age = daysAgo(defWhen(d));
-    if (age == null || age <= 730) return true;
-  }
-  return false;
-}
-
 function gradeDriver(g, defs, acts) {
   if (!g || g.letter === "—" || g.cls === "g-Z") return (g && g.label) || "Closed or inactive.";
   var high12 = 0, high24 = 0, openHigh = 0, any24 = false, i;
@@ -320,7 +309,7 @@ function cardHTML(op, hist) {
   const defs = hist.defs[id] || [];
   const g = gradeOf(op, defs, acts);
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
-  const high = hasHigh(defs) ? '<div class="high-word">HIGH</div>' : "";
+  const high = g.uncorrectedHigh12 ? '<div class="high-word">HIGH</div>' : "";
   const driver = gradeDriver(g, defs, acts);
   return `<article class="card" data-card="${escapeHtml(id)}">
     <div class="card-grade">
@@ -331,7 +320,7 @@ function cardHTML(op, hist) {
       <h2>${escapeHtml(op.operation_name || "Unnamed facility")}</h2>
       <div class="file-kicker">${escapeHtml(licenseKicker(op))}</div>
       ${high}
-      <aside class="g-badge is-empty" data-google-card="${escapeHtml(id)}"></aside>
+      <aside class="g-badge is-empty" data-google-card="${escapeHtml(id)}"><div class="ex-kicker">GOOGLE</div></aside>
       <a class="learn" href="${href}">Learn more →</a>
     </div>
   </article>`;
@@ -349,7 +338,7 @@ function paintGoogleError(node) {
   if (!node) return;
   node.classList.add("is-empty");
   node.classList.add("is-error");
-  node.innerHTML = '<div class="ex-empty">Could not load</div>';
+  node.innerHTML = '<div class="ex-kicker">GOOGLE</div><div class="ex-empty">Could not load</div>';
 }
 
 function fillGoogleRatings(ops) {
@@ -396,7 +385,7 @@ function paintGoogleBadge(node, listing) {
   node.classList.remove("is-error");
   if (!listing) {
     node.classList.add("is-empty");
-    node.innerHTML = '<div class="ex-empty">No Google listing.</div>';
+    node.innerHTML = '<div class="ex-kicker">GOOGLE</div><div class="ex-empty">No Google listing.</div>';
     return;
   }
   node.classList.remove("is-empty");
@@ -612,7 +601,7 @@ function bindChrome() {
         const filtered = !!(q && q.trim());
         status.textContent = rows.length
           ? (filtered
-            ? (rows.length + " matches · map shows only these")
+            ? (rows.length + " matches · map shows only these · not a state rating")
             : "Austin default · last 24 months · not a state rating")
           : ("No licensed operations matched " + (filtered ? q.trim() : "Austin") + ".");
         results.innerHTML = rows.map((op) => cardHTML(op, hist)).join("");
