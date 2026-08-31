@@ -652,12 +652,12 @@ function bindChrome() {
           ? (filtered
             ? (rows.length + " matches · map shows only these · not a state rating")
             : "Austin default · last 24 months · not a state rating")
-          : ("No licensed operations matched " + (filtered ? q.trim() : "Austin") + ".");
+          : ("No licensed operations matched " + (filtered ? q.trim() : "Austin") + " · not a state rating");
         results.innerHTML = rows.map((op) => cardHTML(op, hist)).join("");
         fillGoogleRatings(rows);
         syncMap(rows, hist);
       } catch (e) {
-        status.textContent = "";
+        status.textContent = "not a state rating";
         err.innerHTML = `<div class="err">${e.message}. The Texas open-data API may be rate-limiting. Try again in a moment.</div>`;
       }
     }
