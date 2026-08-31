@@ -448,21 +448,65 @@ var mapMarkers = [];
 var geoCache = {};
 var mapGen = 0;
 var mapFailed = false;
+var mapOopsWatch = null;
 
-function failMap(msg) {
-  mapFailed = true;
-  var el = document.getElementById("map");
-  if (el) el.textContent = msg || "Map could not load.";
+function mapHasOops(el) {
+  if (!el) return false;
+  if (el.querySelector(".gm-err-container, .gm-err-content, .gm-err-title, .gm-err-message, .gm-err-icon")) return true;
+  var t = String(el.textContent || "");
+  return t.indexOf("Oops!") !== -1 || t.indexOf("didn't load Google Maps") !== -1;
 }
+
+function failMap() {
+  mapFailed = true;
+  mapObj = null;
+  geocoder = null;
+  if (mapOopsWatch) {
+    try { mapOopsWatch.disconnect(); } catch (e) {}
+    mapOopsWatch = null;
+  }
+  var el = document.getElementById("map");
+  if (!el) return;
+  el.classList.add("is-unavailable");
+  el.textContent = "Map unavailable.";
+}
+
+function watchMapOops(el) {
+  if (!el || mapFailed) return;
+  if (mapHasOops(el)) {
+    failMap();
+    return;
+  }
+  if (typeof MutationObserver === "function") {
+    mapOopsWatch = new MutationObserver(function () {
+      if (mapHasOops(el)) failMap();
+    });
+    mapOopsWatch.observe(el, { childList: true, subtree: true });
+  }
+  [0, 50, 250, 1000].forEach(function (ms) {
+    setTimeout(function () {
+      if (!mapFailed && mapHasOops(el)) failMap();
+    }, ms);
+  });
+  setTimeout(function () {
+    if (mapOopsWatch) {
+      try { mapOopsWatch.disconnect(); } catch (e) {}
+      mapOopsWatch = null;
+    }
+  }, 4000);
+}
+
+window.gm_authFailure = function () { failMap(); };
 
 function ensureMap() {
   if (mapFailed) return Promise.resolve(null);
   if (mapObj) return Promise.resolve(mapObj);
   if (typeof loadGoogleMaps !== "function") {
-    failMap("Map could not load.");
+    failMap();
     return Promise.resolve(null);
   }
   return loadGoogleMaps().then(function () {
+    if (mapFailed) return null;
     if (!google || !google.maps) throw new Error("maps missing");
     var el = document.getElementById("map");
     el.textContent = "";
@@ -475,10 +519,15 @@ function ensureMap() {
       clickableIcons: false,
       styles: MAP_STYLE
     });
+    if (mapFailed || mapHasOops(el)) {
+      failMap();
+      return null;
+    }
+    watchMapOops(el);
     geocoder = new google.maps.Geocoder();
     return mapObj;
   }).catch(function () {
-    failMap("Map could not load.");
+    failMap();
     return null;
   });
 }
@@ -528,12 +577,12 @@ function syncMap(rows, hist) {
   var gen = ++mapGen;
   clearMarkers();
   ensureMap().then(function (m) {
-    if (!m || gen !== mapGen) return;
+    if (!m || mapFailed || gen !== mapGen) return;
     var bounds = new google.maps.LatLngBounds();
     return mapLimit(rows || [], 4, function (op) {
-      if (gen !== mapGen) return;
+      if (mapFailed || gen !== mapGen) return;
       return geocodeOp(op).then(function (loc) {
-        if (!loc || gen !== mapGen) return;
+        if (!loc || mapFailed || gen !== mapGen) return;
         var id = String(op.operation_id || "");
         var g = gradeOf(op, (hist.defs && hist.defs[id]) || [], (hist.acts && hist.acts[id]) || []);
         var mk = new google.maps.Marker({
@@ -555,7 +604,7 @@ function syncMap(rows, hist) {
         bounds.extend(loc);
       });
     }).then(function () {
-      if (gen !== mapGen) return;
+      if (mapFailed || gen !== mapGen || !m) return;
       if (mapMarkers.length === 1) {
         m.setCenter(mapMarkers[0].getPosition());
         m.setZoom(13);

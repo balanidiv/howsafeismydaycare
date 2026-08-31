@@ -194,6 +194,21 @@ a:hover { color: var(--grade-f); }
   place-items: center;
 }
 .map-pane .gm-style { font-family: "DM Sans", sans-serif; }
+.map-pane.is-unavailable {
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.gm-err-container,
+.gm-err-content,
+.gm-err-icon,
+.gm-err-title,
+.gm-err-message {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 .list-pane {
   display: grid;
   gap: 12px;

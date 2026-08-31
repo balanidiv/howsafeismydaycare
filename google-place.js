@@ -1,6 +1,7 @@
 (function (global) {
   var KEY = "AIzaSyBBYSljZW6mczj-ByrBSHP7Wvfyfkvh6gE";
   var mapsPromise = null;
+  var mapsAuthFailed = false;
 
   function asText(v) {
     if (v == null) return "";
@@ -145,27 +146,58 @@
   }
 
   function loadMapsJs() {
+    if (mapsAuthFailed) return Promise.reject(new Error("Google Maps auth failed"));
     if (global.google && google.maps && google.maps.importLibrary) return Promise.resolve();
     if (mapsPromise) return mapsPromise;
     var p = new Promise(function (resolve, reject) {
+      var settled = false;
+      function fail(err) {
+        if (settled) return;
+        settled = true;
+        reject(err || new Error("Google Maps auth failed"));
+      }
+      function ok() {
+        if (settled) return;
+        if (mapsAuthFailed) {
+          fail(new Error("Google Maps auth failed"));
+          return;
+        }
+        settled = true;
+        resolve();
+      }
+      var prevAuth = global.gm_authFailure;
+      global.gm_authFailure = function () {
+        mapsAuthFailed = true;
+        fail(new Error("Google Maps auth failed"));
+        if (typeof prevAuth === "function") {
+          try { prevAuth(); } catch (e) {}
+        }
+      };
       var s = document.createElement("script");
       s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(KEY) +
         "&v=weekly&libraries=places";
       s.async = true;
-      var t = setTimeout(function () { reject(new Error("Google Maps timed out")); }, 8000);
+      var t = setTimeout(function () { fail(new Error("Google Maps timed out")); }, 8000);
       s.onload = function () {
         clearTimeout(t);
-        if (global.google && google.maps && google.maps.importLibrary) resolve();
-        else reject(new Error("Google Maps loaded without importLibrary"));
+        if (mapsAuthFailed) {
+          fail(new Error("Google Maps auth failed"));
+          return;
+        }
+        if (global.google && google.maps && google.maps.importLibrary) setTimeout(ok, 0);
+        else fail(new Error("Google Maps loaded without importLibrary"));
       };
       s.onerror = function () {
         clearTimeout(t);
-        reject(new Error("Google Maps failed to load"));
+        fail(new Error("Google Maps failed to load"));
       };
       document.head.appendChild(s);
     });
     mapsPromise = p;
-    p.catch(function () { if (mapsPromise === p) mapsPromise = null; });
+    p.catch(function () {
+      if (mapsAuthFailed) return;
+      if (mapsPromise === p) mapsPromise = null;
+    });
     return p;
   }
 
