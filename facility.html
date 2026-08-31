@@ -277,7 +277,7 @@ function gradeOf(op, defs, acts) {
   function googleShell(inner, mode) {
     var live = mode === "live";
     var cls = live ? "g-sheet" : "g-sheet is-empty";
-    var kicker = live ? '<div class="g-kicker">GOOGLE · NOT PART OF THE LETTER</div>' : "";
+    var kicker = '<div class="g-kicker">GOOGLE · NOT PART OF THE LETTER</div>';
     return '<div class="' + cls + '">' + kicker + inner + "</div>";
   }
 
