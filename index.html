@@ -16,7 +16,7 @@
 <body>
   <header class="chrome">
     <div class="wrap chrome-inner">
-      <a class="logo" href="index.html">How <em>safe</em> is my daycare?</a>
+      <a class="logo" href="index.html">how <em>safe</em></a>
       <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer">
         <span></span><span></span><span></span>
       </button>
@@ -432,14 +432,15 @@ function pinColor(letter) {
 
 function pinIcon(letter, color) {
   var safe = String(letter || "—").slice(0, 1);
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28">' +
-    '<rect x="1" y="1" width="26" height="26" rx="6" fill="' + color + '"/>' +
-    '<text x="14" y="19.5" text-anchor="middle" fill="#ffffff" font-family="Outfit,Arial,sans-serif" font-size="14" font-weight="700">' +
+  var size = 60;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '">' +
+    '<rect width="' + size + '" height="' + size + '" rx="14" fill="' + color + '"/>' +
+    '<text x="30" y="40" text-anchor="middle" fill="#ffffff" font-family="Outfit,Arial,sans-serif" font-size="28" font-weight="700">' +
     safe + "</text></svg>";
   return {
     url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(28, 28),
-    anchor: new google.maps.Point(14, 14)
+    scaledSize: new google.maps.Size(size, size),
+    anchor: new google.maps.Point(size / 2, size / 2)
   };
 }
 

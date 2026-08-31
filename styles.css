@@ -48,11 +48,12 @@ a:hover { color: var(--grade-f); }
 .logo {
   font-family: "Outfit", sans-serif;
   font-weight: 650;
-  font-size: clamp(1.02rem, 2.4vw, 1.22rem);
-  letter-spacing: -0.03em;
+  font-size: clamp(1.2rem, 2.8vw, 1.45rem);
+  letter-spacing: -0.04em;
   text-decoration: none;
+  text-transform: none;
   color: var(--ink);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 .logo em { font-style: italic; font-weight: 650; }
 .burger {
