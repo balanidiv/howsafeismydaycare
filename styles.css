@@ -445,7 +445,16 @@ a.official-bar:hover { color: var(--card); background: #000; }
 }
 .finding-head strong { font-weight: 600; flex: 1; display: block; }
 .finding p { margin: 8px 0 0; }
+.finding.is-corrected,
+.finding.is-corrected .finding-head strong,
+.finding.is-corrected p,
+.finding.is-corrected .risk,
+.finding.is-corrected .risk.High,
+.finding.is-corrected .risk.mh {
+  color: var(--muted);
+}
 .finding.is-open-high .finding-head strong { color: var(--grade-f); }
+.finding.is-open-high .risk.High { color: var(--grade-f); }
 
 .muted { color: var(--muted); }
 
@@ -463,9 +472,12 @@ a.official-bar:hover { color: var(--card); background: #000; }
   color: var(--muted);
 }
 .risk.High {
-  color: var(--grade-f);
+  color: var(--muted);
   font-size: 0.82rem;
   letter-spacing: 0.12em;
+}
+.finding.is-open-high .risk.High {
+  color: var(--grade-f);
 }
 .risk.Medium.High, .risk.mh { color: var(--grade-d); }
 
