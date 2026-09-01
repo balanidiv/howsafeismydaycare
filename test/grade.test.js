@@ -67,16 +67,15 @@ var openHighActs = [
 openHighActs[0].activity_date = smokeWhen;
 var f = gradeOf(open, openHighDefs, openHighActs);
 assert(f.uncorrectedHigh === true, "open High this year flags uncorrectedHigh");
-assert(f.capped === true, "uncorrected High caps the file");
-assert(f.score === 79, "cap is 79, got " + f.score);
-assert(f.letter === "C", "79 is a C, got " + f.letter);
+assert(f.letter === "F", "open High is F, got " + f.letter);
+assert(f.cls === "g-F", "open High uses the F tile");
 var openDriver = gradeDriver(f, openHighDefs, openHighActs);
 assert(openDriver.indexOf("Uncorrected High ·") === 0, "open High driver starts Uncorrected High ·, got " + openDriver);
 assert(openDriver.indexOf("Smoking") !== -1, "open High driver names the finding: " + openDriver);
 assert(/cited [A-Z][a-z]{2} \d{4}\.$/.test(openDriver), "open High driver cites month: " + openDriver);
 
 var withStars = gradeOf(open, openHighDefs, openHighActs);
-assert(withStars.score === 79, "stars are not in gradeOf; score stays 79");
+assert(withStars.letter === "F", "stars are not in gradeOf; open High stays F");
 assert(!("reviews" in withStars), "no reviews column on the grade object");
 
 var inactive = gradeOf(closed, [], cleanActs);
@@ -88,7 +87,7 @@ var oldActs = [act("old", 800, "INSPECTION", "Y")].concat(cleanActs);
 var old = gradeOf(open, oldHigh, oldActs);
 assert(old.uncorrectedHigh === false, "High older than 24 months is ignored for the cap");
 assert(old.capped === false, "old High does not cap");
-assert(old.letter === "A" || old.letter === "B", "old High does not drag the letter, got " + old.letter);
+assert(old.letter === "A", "High older than 24 months is no High, so A, got " + old.letter);
 
 // Corrected High does not force F, even as a pile.
 var manyCorrected = [];
@@ -107,7 +106,7 @@ for (var n = 0; n < 10; n++) {
 }
 var pile = gradeOf(open, manyCorrected, manyActs);
 assert(pile.uncorrectedHigh === false, "corrected Highs do not set uncorrectedHigh");
-assert(pile.capped === false, "corrected Highs do not apply the 79-cap");
+assert(pile.capped === false, "corrected Highs do not apply an open-High cap");
 assert(pile.letter !== "F" && pile.letter !== "D", "corrected Highs alone cannot be F/D, got " + pile.letter);
 assert(pile.letter === "B" || pile.letter === "C", "10 corrected Highs sit in B/C, got " + pile.letter + " " + pile.score);
 assert(pile.score <= 89, "corrected-High ceiling keeps the file off A, score " + pile.score);
@@ -122,11 +121,12 @@ assert(twoG.patternCapped === true && twoG.score === 89, "explicit 89 ceiling, s
 var pileDriver = gradeDriver(pile, manyCorrected, manyActs);
 assert(pileDriver === "10 High in 24 mo · all corrected.", "corrected pattern driver: " + pileDriver);
 
-// One corrected High is not a pattern — A is still reachable.
+// One corrected High is still a High — A requires none.
 var one = [def({ id: "one", level: "High", corr: daysAgoFromNow(5), ver: daysAgoFromNow(4), at: "Y" })];
 var oneActs = [act("one", 10, "INSPECTION", "N")];
 var oneG = gradeOf(open, one, oneActs);
-assert(oneG.letter === "A", "a single corrected High can still be A, got " + oneG.letter + " " + oneG.score);
+assert(oneG.letter === "B" || oneG.letter === "C", "a single corrected High is not A, got " + oneG.letter + " " + oneG.score);
+assert(oneG.letter !== "A" && oneG.letter !== "F", "any High in 24 months is not A; corrected is not F");
 assert(oneG.patternCapped === false, "one corrected High is not the pattern ceiling");
 
 // Incident-date recency, not correction-date recency.
@@ -175,7 +175,7 @@ var harshDefs = [def({ id: "prob", level: "High", desc: "745.8641 - Requirements
 var harshActs = [act("prob", 15, "INSPECTION", "Y")];
 var harsh = gradeOf(open, harshDefs, harshActs);
 assert(harsh.uncorrectedHigh === true, "open High gate is on");
-assert(harsh.capped === true && harsh.score === 79, "open High still caps at 79");
+assert(harsh.letter === "F", "open High is F, got " + harsh.letter);
 var harshDriver = gradeDriver(harsh, harshDefs, harshActs);
 assert(harshDriver.indexOf("Requirements during probation") !== -1, "open High driver uses finding text: " + harshDriver);
 
@@ -187,8 +187,12 @@ for (var m = 0; m < 40; m++) {
   medActs.push(act("m" + m, 40, "INSPECTION", "Y"));
 }
 var medG = gradeOf(open, meds, medActs);
-assert(medG.letter !== "F" && medG.letter !== "D", "no F/D without open High or MH, got " + medG.letter);
-assert(medG.score >= 70, "no-open floor is 70, got " + medG.score);
+assert(medG.letter === "A", "no High in 24 months is A even with a pile of Mediums, got " + medG.letter);
+assert(medG.letter !== "F", "no High at all is never F");
+
+// Smell checks: open High must be F; no High must not be F.
+assert(gradeOf(open, openHighDefs, openHighActs).letter === "F", "smell: open High is F");
+assert(gradeOf(open, [], cleanActs).letter !== "F", "smell: clean file is not F");
 
 if (failed) {
   console.error("\n" + failed + " failed");

@@ -2,15 +2,16 @@
   "use strict";
 
   // Open finding weights by HHSC risk. Corrected findings count at 1/4 of
-  // the open weight so the letter tracks harm, not volume.
+  // the open weight so the mix numbers track harm, not volume.
+  // The LETTER is absolute, not a ranking, and is not retuned to fill a quota:
+  //   A = no High in 24 months
+  //   F = an open High
+  //   B/C = corrected Highs only (a pattern a parent can still see)
   var CORRECTED_DISCOUNT = 0.25;
-  // An uncorrected High in 24 months cannot be scored above 79 (C).
-  var OPEN_HIGH_CAP = 79;
-  // Two or more corrected Highs in 24 months is a pattern. Cap at 89 so the
-  // letter stays in the B/C band: not an A, and not an F on fixes alone.
+  // Two or more corrected Highs in 24 months is a pattern. Cap the mix at 89
+  // so the letter stays in the B/C band: not an A, and not an F on fixes alone.
   var CORRECTED_HIGH_PATTERN = 2;
   var CORRECTED_HIGH_CEILING = 89;
-  // No F/D without an open High or open Medium-High in 24 months.
   var NO_OPEN_FLOOR = 70;
   var WINDOW_DAYS = 730;
   var YEAR_DAYS = 365;
@@ -111,7 +112,7 @@
     var closed = String(op.operation_status).toUpperCase() !== "Y" || String(op.temporarily_closed).toUpperCase() === "YES";
     if (closed) return blankGrade("Closed / inactive");
     var dates = activityDateMap(acts);
-    var safety = 0, uncorrectedHigh = false, uncorrectedMH = false, correctedHigh24 = 0, i, d, age, open;
+    var safety = 0, uncorrectedHigh = false, high24 = 0, i, d, age, open;
     for (i = 0; i < defs.length; i++) {
       d = defs[i];
       age = daysAgo(incidentWhen(d, dates));
@@ -119,10 +120,8 @@
       safety -= riskHit(d.standard_risk_level, age, open);
       if (!inWindow(age)) continue;
       if (isHigh(d.standard_risk_level)) {
+        high24 += 1;
         if (open) uncorrectedHigh = true;
-        else correctedHigh24 += 1;
-      } else if (open && isMediumHigh(d.standard_risk_level)) {
-        uncorrectedMH = true;
       }
     }
     var inspect = 0, clean12 = 0, any24 = false;
@@ -141,20 +140,19 @@
     inspect += Math.min(5, clean12);
     if (!any24) inspect -= 5;
     var raw = 100 + safety + inspect;
-    var capped = false, patternCapped = false;
-    if (uncorrectedHigh && raw > OPEN_HIGH_CAP) {
-      raw = OPEN_HIGH_CAP;
-      capped = true;
-    }
-    if (!uncorrectedHigh && correctedHigh24 >= CORRECTED_HIGH_PATTERN && raw > CORRECTED_HIGH_CEILING) {
+    var patternCapped = false;
+    if (!uncorrectedHigh && high24 >= CORRECTED_HIGH_PATTERN && raw > CORRECTED_HIGH_CEILING) {
       raw = CORRECTED_HIGH_CEILING;
       patternCapped = true;
     }
-    if (!uncorrectedHigh && !uncorrectedMH && raw < NO_OPEN_FLOOR) {
+    if (!uncorrectedHigh && high24 > 0 && raw < NO_OPEN_FLOOR) {
       raw = NO_OPEN_FLOOR;
     }
     var score = Math.max(0, Math.min(100, Math.round(raw)));
-    var letter = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+    var letter;
+    if (uncorrectedHigh) letter = "F";
+    else if (high24 === 0) letter = "A";
+    else letter = score >= 80 ? "B" : "C";
     return {
       letter: letter,
       score: score,
@@ -162,7 +160,7 @@
       label: score + " / 100",
       safety: Math.round(safety),
       inspect: inspect,
-      capped: capped,
+      capped: false,
       patternCapped: patternCapped,
       uncorrectedHigh: uncorrectedHigh
     };
@@ -265,7 +263,6 @@
     CORRECTED_DISCOUNT: CORRECTED_DISCOUNT,
     CORRECTED_HIGH_PATTERN: CORRECTED_HIGH_PATTERN,
     CORRECTED_HIGH_CEILING: CORRECTED_HIGH_CEILING,
-    OPEN_HIGH_CAP: OPEN_HIGH_CAP,
     NO_OPEN_FLOOR: NO_OPEN_FLOOR,
     daysAgo: daysAgo,
     isUncorrected: isUncorrected,

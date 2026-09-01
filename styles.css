@@ -28,6 +28,8 @@ body {
 
 a { color: inherit; }
 a:hover { color: var(--grade-f); }
+.card:has(.g-A) a:hover,
+.page:has(.g-A) .crumb a:hover { color: var(--ink); }
 
 .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
 
@@ -272,8 +274,9 @@ a:hover { color: var(--grade-f); }
   line-height: 1.35;
   color: var(--muted);
 }
-.g-A { background: var(--grade-a); }
-.g-B { background: var(--grade-b); }
+/* A is quiet moss so a single F (red) is the only loud tile on the shelf. */
+.g-A { background: var(--grade-b); }
+.g-B { background: var(--grade-a); }
 .g-C { background: var(--grade-c); }
 .g-D { background: var(--grade-d); }
 .g-F, .g-X { background: var(--grade-f); }
