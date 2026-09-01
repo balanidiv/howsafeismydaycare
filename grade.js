@@ -257,6 +257,10 @@
     return "No High in 24 months.";
   }
 
+  function isScarDriver(text) {
+    return / High in 24 mo · all corrected\.?$/.test(String(text || ""));
+  }
+
   var api = {
     CORRECTED_DISCOUNT: CORRECTED_DISCOUNT,
     CORRECTED_HIGH_PATTERN: CORRECTED_HIGH_PATTERN,
@@ -268,6 +272,7 @@
     riskHit: riskHit,
     gradeOf: gradeOf,
     gradeDriver: gradeDriver,
+    isScarDriver: isScarDriver,
     findingSnippet: findingSnippet
   };
 
@@ -279,6 +284,7 @@
     root.riskHit = riskHit;
     root.gradeOf = gradeOf;
     root.gradeDriver = gradeDriver;
+    root.isScarDriver = isScarDriver;
     root.findingSnippet = findingSnippet;
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);

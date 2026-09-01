@@ -223,11 +223,9 @@ function cardHTML(op, hist) {
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
   const high = g.uncorrectedHigh ? '<div class="high-word">HIGH</div>' : "";
   const driver = gradeDriver(g, defs, acts);
+  const scar = isScarDriver(driver) ? " is-scar" : "";
   return `<article class="card" data-card="${escapeHtml(id)}">
-    <div class="card-grade">
-      <div class="grade-tile ${g.cls}" title="${escapeHtml(g.label)}">${escapeHtml(g.letter)}</div>
-      <p class="grade-driver">${escapeHtml(driver)}</p>
-    </div>
+    <div class="grade-tile ${g.cls}" title="${escapeHtml(g.label)}">${escapeHtml(g.letter)}</div>
     <div class="card-main">
       <h2>${escapeHtml(op.operation_name || "Unnamed facility")}</h2>
       <div class="file-kicker">${escapeHtml(licenseKicker(op))}</div>
@@ -235,6 +233,7 @@ function cardHTML(op, hist) {
       <aside class="g-badge is-empty" data-google-card="${escapeHtml(id)}"><div class="ex-kicker">GOOGLE</div></aside>
       <a class="learn" href="${href}">Learn more →</a>
     </div>
+    <p class="grade-driver${scar}">${escapeHtml(driver)}</p>
   </article>`;
 }
 

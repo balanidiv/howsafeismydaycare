@@ -112,9 +112,11 @@
       '<div class="mix-google"><b id="mix-google-num">—</b><span>Google</span></div></div>' + cap;
   }
   function tileEl(g, defs, acts) {
-    return '<div class="card-grade"><div class="grade-tile grade-lg ' + g.cls + '" title="' +
-      escapeHtml(g.label) + '">' + escapeHtml(g.letter) + '</div><p class="grade-driver">' +
-      escapeHtml(gradeDriver(g, defs, acts)) + "</p></div>";
+    var driver = gradeDriver(g, defs, acts);
+    var scar = isScarDriver(driver) ? " is-scar" : "";
+    return '<div class="grade-tile grade-lg ' + g.cls + '" title="' +
+      escapeHtml(g.label) + '">' + escapeHtml(g.letter) + '</div>' +
+      '<p class="grade-driver' + scar + '">' + escapeHtml(driver) + "</p>";
   }
 
   function fetchJson(url, ms) {

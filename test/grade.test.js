@@ -118,6 +118,9 @@ assert(twoG.letter === "B", "two corrected Highs with a clean file cap at B, got
 assert(twoG.patternCapped === true && twoG.score === 89, "explicit 89 ceiling, score " + twoG.score + " patternCapped " + twoG.patternCapped);
 var pileDriver = gradeDriver(pile, manyCorrected, manyActs);
 assert(pileDriver === "10 High in 24 mo · all corrected.", "corrected pattern driver: " + pileDriver);
+assert(g.isScarDriver(pileDriver) === true, "corrected-High driver is the scar line");
+assert(g.isScarDriver("No High in 24 months · last inspection clean.") === false, "clean driver is not the scar");
+assert(g.isScarDriver("Uncorrected High · Smoking cited Aug 2026.") === false, "open High driver is not the scar");
 
 // One corrected High is still a High — A requires none.
 var one = [def({ id: "one", level: "High", corr: daysAgoFromNow(5), ver: daysAgoFromNow(4), at: "Y" })];
