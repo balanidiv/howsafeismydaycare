@@ -56,9 +56,7 @@ var smokeWhen = daysAgoFromNow(20);
 var openHighDefs = [def({
   id: "h1",
   level: "High",
-  desc: "746.3707 - Smoking, cigarettes, tobacco",
-  corr: daysAgoFromNow(-10),
-  at: "N"
+  desc: "746.3707 - Smoking, cigarettes, tobacco"
 })];
 var openHighActs = [
   act("h1", 20, "INSPECTION", "Y"),
@@ -162,16 +160,34 @@ var orphanG = gradeOf(open, orphan, cleanActs);
 assert(orphanG.uncorrectedHigh === false, "join miss does not count as an open High");
 assert(orphanG.letter === "A", "join miss grades up, got " + orphanG.letter);
 
-// corrected_date alone does not close a finding.
-assert(isUncorrected({ standard_risk_level: "High", corrected_date: daysAgoFromNow(-20), corrected_at_inspection: "N" }) === true,
-  "future/due corrected_date without verification is still open");
-assert(isUncorrected({ standard_risk_level: "High", date_correction_verified: daysAgoFromNow(2), corrected_at_inspection: "N" }) === false,
+// Open = both correction dates missing. Unverified (corrected_date only) is not open.
+assert(isUncorrected({ standard_risk_level: "High" }) === true,
+  "missing both correction dates is open");
+assert(isUncorrected({ standard_risk_level: "High", corrected_date: daysAgoFromNow(-20), corrected_at_inspection: "N" }) === false,
+  "corrected_date without verification is not open");
+assert(isUncorrected({ standard_risk_level: "High", date_correction_verified: daysAgoFromNow(2) }) === false,
   "date_correction_verified closes the finding");
-assert(isUncorrected({ standard_risk_level: "High", corrected_at_inspection: "Y" }) === false,
-  "corrected at inspection is closed even without a verified date");
+assert(isUncorrected({ standard_risk_level: "High", corrected_at_inspection: "Y" }) === true,
+  "corrected_at_inspection is not an open/closed proxy");
 
-// Open High gate: HIGH word / 79-cap / F available. Corrected High never forces F.
-var harshDefs = [def({ id: "prob", level: "High", desc: "745.8641 - Requirements during probation", at: "N" })];
+// Unverified High (corrected_date present, verified missing) is corrected, not F.
+var unverifiedHigh = [def({
+  id: "uv",
+  level: "High",
+  desc: "746.5101(a) - Annual Fire Inspection",
+  corr: daysAgoFromNow(10),
+  at: "N"
+})];
+var unverifiedActs = [act("uv", 10, "INSPECTION", "Y")];
+var uvG = gradeOf(open, unverifiedHigh, unverifiedActs);
+assert(uvG.uncorrectedHigh === false, "unverified is not open High");
+assert(uvG.letter !== "F", "unverified High is not F, got " + uvG.letter);
+assert(uvG.letter === "B" || uvG.letter === "C", "unverified High sits in B/C, got " + uvG.letter);
+assert(gradeDriver(uvG, unverifiedHigh, unverifiedActs) === "1 High in 24 mo · all corrected.",
+  "unverified driver: " + gradeDriver(uvG, unverifiedHigh, unverifiedActs));
+
+// Open High gate: both dates missing. Unverified-as-open is forbidden. Corrected High never forces F.
+var harshDefs = [def({ id: "prob", level: "High", desc: "745.8641 - Requirements during probation" })];
 var harshActs = [act("prob", 15, "INSPECTION", "Y")];
 var harsh = gradeOf(open, harshDefs, harshActs);
 assert(harsh.uncorrectedHigh === true, "open High gate is on");

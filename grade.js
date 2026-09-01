@@ -24,13 +24,11 @@
   }
 
   function isUncorrected(d) {
-    if (!d) return false;
-    var at = String(d.corrected_at_inspection || "").toUpperCase();
-    if (at === "Y" || at === "YES") return false;
-    if (d.date_correction_verified) return false;
-    // corrected_date is the HHSC due/reported date and is filled even while
-    // a finding is still open. It is not proof of correction.
-    return true;
+    // Open = both correction dates missing. A due/reported corrected_date
+    // with no date_correction_verified is NOT open. Do not proxy via
+    // corrected_at_inspection. On the HHSC public feed, corrected_date is
+    // almost always filled, so F / HIGH may be unreachable. That is accepted.
+    return !(d && (d.corrected_date || d.date_correction_verified));
   }
 
   function isHigh(level) {
