@@ -8,11 +8,13 @@
   //   F = an open High
   //   B/C = corrected Highs only (a pattern a parent can still see)
   var CORRECTED_DISCOUNT = 0.25;
+  // An uncorrected High cannot have a mix that reads like an A/B under the F tile.
+  var OPEN_HIGH_CAP = 79;
   // Two or more corrected Highs in 24 months is a pattern. Cap the mix at 89
   // so the letter stays in the B/C band: not an A, and not an F on fixes alone.
+  // Ceiling only — do not raise a low mix.
   var CORRECTED_HIGH_PATTERN = 2;
   var CORRECTED_HIGH_CEILING = 89;
-  var NO_OPEN_FLOOR = 70;
   var WINDOW_DAYS = 730;
   var YEAR_DAYS = 365;
 
@@ -138,13 +140,14 @@
     inspect += Math.min(5, clean12);
     if (!any24) inspect -= 5;
     var raw = 100 + safety + inspect;
-    var patternCapped = false;
+    var capped = false, patternCapped = false;
+    if (uncorrectedHigh && raw > OPEN_HIGH_CAP) {
+      raw = OPEN_HIGH_CAP;
+      capped = true;
+    }
     if (!uncorrectedHigh && high24 >= CORRECTED_HIGH_PATTERN && raw > CORRECTED_HIGH_CEILING) {
       raw = CORRECTED_HIGH_CEILING;
       patternCapped = true;
-    }
-    if (!uncorrectedHigh && high24 > 0 && raw < NO_OPEN_FLOOR) {
-      raw = NO_OPEN_FLOOR;
     }
     var score = Math.max(0, Math.min(100, Math.round(raw)));
     var letter;
@@ -158,7 +161,7 @@
       label: score + " / 100",
       safety: Math.round(safety),
       inspect: inspect,
-      capped: false,
+      capped: capped,
       patternCapped: patternCapped,
       uncorrectedHigh: uncorrectedHigh
     };
@@ -265,7 +268,7 @@
     CORRECTED_DISCOUNT: CORRECTED_DISCOUNT,
     CORRECTED_HIGH_PATTERN: CORRECTED_HIGH_PATTERN,
     CORRECTED_HIGH_CEILING: CORRECTED_HIGH_CEILING,
-    NO_OPEN_FLOOR: NO_OPEN_FLOOR,
+    OPEN_HIGH_CAP: OPEN_HIGH_CAP,
     daysAgo: daysAgo,
     isUncorrected: isUncorrected,
     incidentWhen: incidentWhen,

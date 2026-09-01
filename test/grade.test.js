@@ -67,6 +67,8 @@ var f = gradeOf(open, openHighDefs, openHighActs);
 assert(f.uncorrectedHigh === true, "open High this year flags uncorrectedHigh");
 assert(f.letter === "F", "open High is F, got " + f.letter);
 assert(f.cls === "g-F", "open High uses the F tile");
+assert(f.capped === true, "uncorrected High caps the mix");
+assert(f.score === 79, "cap is 79, got " + f.score);
 var openDriver = gradeDriver(f, openHighDefs, openHighActs);
 assert(openDriver.indexOf("Uncorrected High ·") === 0, "open High driver starts Uncorrected High ·, got " + openDriver);
 assert(openDriver.indexOf("Smoking") !== -1, "open High driver names the finding: " + openDriver);
@@ -74,6 +76,7 @@ assert(/cited [A-Z][a-z]{2} \d{4}\.$/.test(openDriver), "open High driver cites 
 
 var withStars = gradeOf(open, openHighDefs, openHighActs);
 assert(withStars.letter === "F", "stars are not in gradeOf; open High stays F");
+assert(withStars.score === 79, "stars are not in gradeOf; mix stays 79");
 assert(!("reviews" in withStars), "no reviews column on the grade object");
 
 var inactive = gradeOf(closed, [], cleanActs);
@@ -108,6 +111,7 @@ assert(pile.capped === false, "corrected Highs do not apply an open-High cap");
 assert(pile.letter !== "F" && pile.letter !== "D", "corrected Highs alone cannot be F/D, got " + pile.letter);
 assert(pile.letter === "B" || pile.letter === "C", "10 corrected Highs sit in B/C, got " + pile.letter + " " + pile.score);
 assert(pile.score <= 89, "corrected-High ceiling keeps the file off A, score " + pile.score);
+assert(pile.score < 70, "corrected-High mix is not raised to 70, got " + pile.score);
 var twoHighActs = [act("th1", 20, "INSPECTION", "N"), act("th2", 25, "INSPECTION", "N")];
 var twoHigh = [
   def({ id: "th1", level: "High", ver: daysAgoFromNow(4), at: "N" }),
@@ -195,6 +199,7 @@ var harshActs = [act("prob", 15, "INSPECTION", "Y")];
 var harsh = gradeOf(open, harshDefs, harshActs);
 assert(harsh.uncorrectedHigh === true, "open High gate is on");
 assert(harsh.letter === "F", "open High is F, got " + harsh.letter);
+assert(harsh.capped === true && harsh.score === 79, "open High mix is capped at 79, got " + harsh.score);
 var harshDriver = gradeDriver(harsh, harshDefs, harshActs);
 assert(harshDriver.indexOf("Requirements during probation") !== -1, "open High driver uses finding text: " + harshDriver);
 

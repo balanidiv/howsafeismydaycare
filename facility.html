@@ -103,8 +103,8 @@
   }
 
   function mixHTML(g) {
-    var cap = g.uncorrectedHigh
-      ? '<p class="mix-cap">Uncorrected High in the last 24 months. This file is an F. Google is a separate exhibit.</p>'
+    var cap = g.capped
+      ? '<p class="mix-cap">This file is capped at 79. Uncorrected High in the last 24 months cannot be erased. Google is a separate exhibit.</p>'
       : "";
     return '<div id="grade-mix" class="mix-quiet">' +
       "<div><b>" + signed(g.safety) + "</b><span>Safety</span></div>" +
