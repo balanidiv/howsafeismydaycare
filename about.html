@@ -41,14 +41,14 @@
       <p>Included operation types: Licensed Center, Licensed Child-Care Home, Registered Child-Care Home, Listed Family Home. Excluded: general residential operations and child-placing agencies.</p>
 
       <h2>How the letter grade is computed</h2>
-      <p>This is <em>not</em> an official HHSC rating. It is a parent-perspective score for Texas files only. The letter is absolute, not a ranking: A means no High in the last 24 months, F means an open High (both <code>corrected_date</code> and <code>date_correction_verified</code> missing). A due date without verification is not treated as open. Clean cities will show a wall of A’s — that is the honest answer, not a failure of the scale. Recency is the inspection/incident date (joined on <code>activity_id</code>), not the correction date. A corrected finding weighs one-quarter of an open finding at the same risk level. Search cards and facility pages share the same HHSC math. Google is a separate exhibit and is not part of the letter.</p>
+      <p>This is <em>not</em> an official HHSC rating. It is a parent-perspective score for Texas files only. The letter is absolute, not a ranking: A means no severe in the last 24 months, F means an open severe (HHSC High: both <code>corrected_date</code> and <code>date_correction_verified</code> missing). A due date without verification is not treated as open. Clean cities will show a wall of A’s — that is the honest answer, not a failure of the scale. Recency is the inspection/incident date (joined on <code>activity_id</code>), not the correction date. A corrected finding weighs one-quarter of an open finding at the same risk level. Search cards and facility pages share the same HHSC math. Google is a separate exhibit and is not part of the letter.</p>
       <table>
         <thead><tr><th>Signal</th><th>Effect</th></tr></thead>
         <tbody>
           <tr><td>Start</td><td>100</td></tr>
-          <tr><td>Open High in last 12 months</td><td>−8 each</td></tr>
-          <tr><td>Corrected High in last 12 months</td><td>−2 each (one-quarter of the open weight)</td></tr>
-          <tr><td>Open Medium High / Medium / Medium Low / Low, last 12 months</td><td>−5 / −3 / −2 / −1</td></tr>
+          <tr><td>Open severe (HHSC High) in last 12 months</td><td>−8 each</td></tr>
+          <tr><td>Corrected severe (HHSC High) in last 12 months</td><td>−2 each (one-quarter of the open weight)</td></tr>
+          <tr><td>Open moderate / minor (HHSC Medium High / Medium / Medium Low / Low), last 12 months</td><td>−5 / −3 / −2 / −1</td></tr>
           <tr><td>Corrected findings at those same levels</td><td>One-quarter of the open weight</td></tr>
           <tr><td>Same findings 12–24 months old</td><td>Half of the (open or corrected) weight</td></tr>
           <tr><td>Older than 24 months, or no incident date on the inspection join</td><td>Ignored — we grade up, not down</td></tr>
@@ -56,9 +56,9 @@
           <tr><td>Clean inspection, last 12 months</td><td>+1 each, max +5</td></tr>
           <tr><td>Violation 12–24 months ago</td><td>−1</td></tr>
           <tr><td>No inspections in 24 months</td><td>−5</td></tr>
-          <tr><td>Uncorrected High in the last 24 months</td><td>Both correction dates missing. Letter is F. Mix is capped at 79 so it cannot read like an A/B. The HIGH word shows. On the public HHSC feed this may never fire — accepted, not a proxy.</td></tr>
-          <tr><td>No High in the last 24 months</td><td>Letter is A. Medium findings and inspection mix do not take it off A.</td></tr>
-          <tr><td>Corrected Highs in 24 months, none open</td><td>B or C. Two or more cap the mix at 89 so it cannot be A. There is no floor — a low mix is not raised to 70. It cannot be F on fixes alone.</td></tr>
+          <tr><td>Uncorrected severe in the last 24 months</td><td>HHSC High, both correction dates missing. Letter is F. Mix is capped at 79 so it cannot read like an A/B. The SEVERE word shows. On the public HHSC feed this may never fire — accepted, not a proxy.</td></tr>
+          <tr><td>No severe in the last 24 months</td><td>Letter is A. Moderate findings and inspection mix do not take it off A.</td></tr>
+          <tr><td>Corrected severe findings in 24 months, none open</td><td>B or C. Two or more cap the mix at 89 so it cannot be A. There is no floor — a low mix is not raised to 70. It cannot be F on fixes alone.</td></tr>
           <tr><td>Inactive or temporarily closed</td><td>No letter</td></tr>
         </tbody>
       </table>

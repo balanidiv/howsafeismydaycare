@@ -50,7 +50,7 @@ var a = gradeOf(open, [], cleanActs);
 assert(a.letter === "A", "clean recent inspection is A, got " + a.letter + " " + a.score);
 assert(a.capped === false, "clean file is not capped");
 assert(a.uncorrectedHigh === false, "clean file has no open High");
-assert(gradeDriver(a, [], cleanActs) === "No High in 24 months · last inspection clean.", "clean driver: " + gradeDriver(a, [], cleanActs));
+assert(gradeDriver(a, [], cleanActs) === "No severe in 24 months · last inspection clean.", "clean driver: " + gradeDriver(a, [], cleanActs));
 
 var smokeWhen = daysAgoFromNow(20);
 var openHighDefs = [def({
@@ -70,7 +70,7 @@ assert(f.cls === "g-F", "open High uses the F tile");
 assert(f.capped === true, "uncorrected High caps the mix");
 assert(f.score === 79, "cap is 79, got " + f.score);
 var openDriver = gradeDriver(f, openHighDefs, openHighActs);
-assert(openDriver.indexOf("Uncorrected High ·") === 0, "open High driver starts Uncorrected High ·, got " + openDriver);
+assert(openDriver.indexOf("Uncorrected severe ·") === 0, "open High driver starts Uncorrected severe ·, got " + openDriver);
 assert(openDriver.indexOf("Smoking") !== -1, "open High driver names the finding: " + openDriver);
 assert(/cited [A-Z][a-z]{2} \d{4}\.$/.test(openDriver), "open High driver cites month: " + openDriver);
 
@@ -121,10 +121,10 @@ var twoG = gradeOf(open, twoHigh, twoHighActs);
 assert(twoG.letter === "B", "two corrected Highs with a clean file cap at B, got " + twoG.letter + " " + twoG.score);
 assert(twoG.patternCapped === true && twoG.score === 89, "explicit 89 ceiling, score " + twoG.score + " patternCapped " + twoG.patternCapped);
 var pileDriver = gradeDriver(pile, manyCorrected, manyActs);
-assert(pileDriver === "10 High in 24 mo · all corrected.", "corrected pattern driver: " + pileDriver);
+assert(pileDriver === "10 severe in 24 mo · all corrected.", "corrected pattern driver: " + pileDriver);
 assert(g.isScarDriver(pileDriver) === true, "corrected-High driver is the scar line");
-assert(g.isScarDriver("No High in 24 months · last inspection clean.") === false, "clean driver is not the scar");
-assert(g.isScarDriver("Uncorrected High · Smoking cited Aug 2026.") === false, "open High driver is not the scar");
+assert(g.isScarDriver("No severe in 24 months · last inspection clean.") === false, "clean driver is not the scar");
+assert(g.isScarDriver("Uncorrected severe · Smoking cited Aug 2026.") === false, "open High driver is not the scar");
 
 // One corrected High is still a High — A requires none.
 var one = [def({ id: "one", level: "High", corr: daysAgoFromNow(5), ver: daysAgoFromNow(4), at: "Y" })];
@@ -159,7 +159,7 @@ var recentActs = [act("fresh1", 10, "INSPECTION", "N"), act("fresh2", 12, "INSPE
 var recentG = gradeOf(open, recentIncident, recentActs);
 assert(recentG.safety < 0, "recent incident stays in the window even if correction is old, safety " + recentG.safety);
 assert(recentG.letter === "B" || recentG.letter === "C", "two recent corrected Highs are a pattern, got " + recentG.letter);
-assert(gradeDriver(recentG, recentIncident, recentActs) === "2 High in 24 mo · all corrected.", "recent-incident driver: " + gradeDriver(recentG, recentIncident, recentActs));
+assert(gradeDriver(recentG, recentIncident, recentActs) === "2 severe in 24 mo · all corrected.", "recent-incident driver: " + gradeDriver(recentG, recentIncident, recentActs));
 
 // Join miss: no activity_id match → skip (grade up), do not treat as today.
 var orphan = [def({ id: "missing-act", level: "High", at: "N" })];
@@ -190,7 +190,7 @@ var uvG = gradeOf(open, unverifiedHigh, unverifiedActs);
 assert(uvG.uncorrectedHigh === false, "unverified is not open High");
 assert(uvG.letter !== "F", "unverified High is not F, got " + uvG.letter);
 assert(uvG.letter === "B" || uvG.letter === "C", "unverified High sits in B/C, got " + uvG.letter);
-assert(gradeDriver(uvG, unverifiedHigh, unverifiedActs) === "1 High in 24 mo · all corrected.",
+assert(gradeDriver(uvG, unverifiedHigh, unverifiedActs) === "1 severe in 24 mo · all corrected.",
   "unverified driver: " + gradeDriver(uvG, unverifiedHigh, unverifiedActs));
 
 // Open High gate: both dates missing. Unverified-as-open is forbidden. Corrected High never forces F.
@@ -217,6 +217,19 @@ assert(medG.letter !== "F", "no High at all is never F");
 // Smell checks: open High must be F; no High must not be F.
 assert(gradeOf(open, openHighDefs, openHighActs).letter === "F", "smell: open High is F");
 assert(gradeOf(open, [], cleanActs).letter !== "F", "smell: clean file is not F");
+
+// Parent-facing words only. Scoring still matches HHSC High / Medium High / etc.
+assert(g.parentRiskWord("High") === "severe", "HHSC High is parent severe");
+assert(g.parentRiskWord("Medium High") === "moderate", "HHSC Medium High is parent moderate");
+assert(g.parentRiskWord("Medium-High") === "moderate", "hyphenated Medium-High is parent moderate");
+assert(g.parentRiskWord("Medium") === "moderate", "HHSC Medium is parent moderate");
+assert(g.parentRiskWord("Medium Low") === "minor", "HHSC Medium Low is parent minor");
+assert(g.parentRiskWord("Low") === "minor", "HHSC Low is parent minor");
+assert(g.parentRiskWord("Medium High") !== "severe", "Medium-High is never parent severe");
+assert(riskHit("High", 10, true) === 8, "scoring still uses HHSC High weight 8, got " + riskHit("High", 10, true));
+assert(riskHit("Medium High", 10, true) === 5, "scoring still uses HHSC Medium High weight 5");
+assert(riskHit("Medium", 10, true) === 3, "scoring still uses HHSC Medium weight 3");
+assert(riskHit("Low", 10, true) === 1, "scoring still uses HHSC Low weight 1");
 
 if (failed) {
   console.error("\n" + failed + " failed");

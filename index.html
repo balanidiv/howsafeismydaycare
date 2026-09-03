@@ -221,7 +221,7 @@ function cardHTML(op, hist) {
   const defs = hist.defs[id] || [];
   const g = gradeOf(op, defs, acts);
   const href = `facility.html?id=${encodeURIComponent(op.operation_id)}`;
-  const high = g.uncorrectedHigh ? '<div class="high-word">HIGH</div>' : "";
+  const high = g.uncorrectedHigh ? '<div class="high-word">SEVERE</div>' : "";
   const driver = gradeDriver(g, defs, acts);
   const scar = isScarDriver(driver) ? " is-scar" : "";
   return `<article class="card" data-card="${escapeHtml(id)}">
