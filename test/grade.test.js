@@ -121,7 +121,9 @@ var twoG = gradeOf(open, twoHigh, twoHighActs);
 assert(twoG.letter === "B", "two corrected Highs with a clean file cap at B, got " + twoG.letter + " " + twoG.score);
 assert(twoG.patternCapped === true && twoG.score === 89, "explicit 89 ceiling, score " + twoG.score + " patternCapped " + twoG.patternCapped);
 var pileDriver = gradeDriver(pile, manyCorrected, manyActs);
-assert(pileDriver === "10 severe in 24 mo · all corrected.", "corrected pattern driver: " + pileDriver);
+assert(pileDriver === "10 severe violations in the last 24 months", "corrected pattern driver: " + pileDriver);
+assert(pileDriver.indexOf("all corrected") === -1, "scar driver never says all corrected");
+assert(pileDriver.indexOf("all fixed") === -1, "scar driver never says all fixed");
 assert(g.isScarDriver(pileDriver) === true, "corrected-High driver is the scar line");
 assert(g.isScarDriver("No severe in 24 months · last inspection clean.") === false, "clean driver is not the scar");
 assert(g.isScarDriver("Uncorrected severe · Smoking cited Aug 2026.") === false, "open High driver is not the scar");
@@ -159,7 +161,7 @@ var recentActs = [act("fresh1", 10, "INSPECTION", "N"), act("fresh2", 12, "INSPE
 var recentG = gradeOf(open, recentIncident, recentActs);
 assert(recentG.safety < 0, "recent incident stays in the window even if correction is old, safety " + recentG.safety);
 assert(recentG.letter === "B" || recentG.letter === "C", "two recent corrected Highs are a pattern, got " + recentG.letter);
-assert(gradeDriver(recentG, recentIncident, recentActs) === "2 severe in 24 mo · all corrected.", "recent-incident driver: " + gradeDriver(recentG, recentIncident, recentActs));
+assert(gradeDriver(recentG, recentIncident, recentActs) === "2 severe violations in the last 24 months", "recent-incident driver: " + gradeDriver(recentG, recentIncident, recentActs));
 
 // Join miss: no activity_id match → skip (grade up), do not treat as today.
 var orphan = [def({ id: "missing-act", level: "High", at: "N" })];
@@ -190,7 +192,7 @@ var uvG = gradeOf(open, unverifiedHigh, unverifiedActs);
 assert(uvG.uncorrectedHigh === false, "unverified is not open High");
 assert(uvG.letter !== "F", "unverified High is not F, got " + uvG.letter);
 assert(uvG.letter === "B" || uvG.letter === "C", "unverified High sits in B/C, got " + uvG.letter);
-assert(gradeDriver(uvG, unverifiedHigh, unverifiedActs) === "1 severe in 24 mo · all corrected.",
+assert(gradeDriver(uvG, unverifiedHigh, unverifiedActs) === "1 severe violations in the last 24 months",
   "unverified driver: " + gradeDriver(uvG, unverifiedHigh, unverifiedActs));
 
 // Open High gate: both dates missing. Unverified-as-open is forbidden. Corrected High never forces F.

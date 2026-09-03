@@ -264,13 +264,13 @@
       if (month) return "Uncorrected severe · cited " + month + ".";
       return "Uncorrected severe.";
     }
-    if (high24) return high24 + " severe in 24 mo · all corrected.";
+    if (high24) return high24 + " severe violations in the last 24 months";
     if (lastInspectionClean(acts)) return "No severe in 24 months · last inspection clean.";
     return "No severe in 24 months.";
   }
 
   function isScarDriver(text) {
-    return / severe in 24 mo · all corrected\.?$/.test(String(text || ""));
+    return /^\d+ severe violations in the last 24 months$/.test(String(text || ""));
   }
 
   var api = {

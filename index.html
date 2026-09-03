@@ -17,17 +17,9 @@
 <body>
   <header class="chrome">
     <div class="wrap chrome-inner">
-      <a class="logo" href="index.html">how <em>safe</em></a>
-      <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer">
-        <span></span><span></span><span></span>
-      </button>
+      <a class="logo" href="index.html">How Safe Is My Daycare?</a>
+      <a class="chrome-link" href="https://divy.am/" rel="noopener">Div Balani</a>
     </div>
-    <nav class="drawer" id="drawer">
-      <div class="wrap">
-        <a href="about.html">How this works</a>
-        <a href="https://divy.am" rel="noopener">Div Balani</a>
-      </div>
-    </nav>
   </header>
 
   <div class="wrap page-head">
@@ -529,16 +521,6 @@ function syncMap(rows, hist) {
   });
 }
 
-function bindChrome() {
-  var chrome = document.querySelector(".chrome");
-  var btn = document.getElementById("burger");
-  if (!chrome || !btn) return;
-  btn.addEventListener("click", function () {
-    var open = chrome.classList.toggle("is-open");
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-  });
-}
-
 </script>
 <script>
     const form = document.getElementById("form");
@@ -547,7 +529,6 @@ function bindChrome() {
     const results = document.getElementById("results");
     const err = document.getElementById("err");
 
-    bindChrome();
     ensureMap();
 
     async function run(q) {
