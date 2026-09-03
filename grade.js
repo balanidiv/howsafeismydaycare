@@ -29,8 +29,17 @@
     // Open = both correction dates missing. A due/reported corrected_date
     // with no date_correction_verified is NOT open. Do not proxy via
     // corrected_at_inspection. On the HHSC public feed, corrected_date is
-    // almost always filled, so F / HIGH may be unreachable. That is accepted.
+    // almost always filled, so F / SEVERE may be unreachable. That is accepted.
     return !(d && (d.corrected_date || d.date_correction_verified));
+  }
+
+  // Parent-facing risk words. Scoring still matches HHSC High / Medium High / etc.
+  function parentRiskWord(level) {
+    var l = String(level || "").replace(/-/g, " ").replace(/\s+/g, " ").trim();
+    if (l === "High") return "severe";
+    if (l === "Medium High" || l.indexOf("Medium High") === 0 || l === "Medium") return "moderate";
+    if (l === "Low" || l === "Medium Low" || l.indexOf("Medium Low") === 0) return "minor";
+    return l || "n/a";
   }
 
   function isHigh(level) {
@@ -250,18 +259,18 @@
       var worst = openHighs[0];
       var snippet = findingSnippet(worst.d);
       var month = fmtMonth(worst.when);
-      if (snippet && month) return "Uncorrected High · " + snippet + " cited " + month + ".";
-      if (snippet) return "Uncorrected High · " + snippet + ".";
-      if (month) return "Uncorrected High · cited " + month + ".";
-      return "Uncorrected High.";
+      if (snippet && month) return "Uncorrected severe · " + snippet + " cited " + month + ".";
+      if (snippet) return "Uncorrected severe · " + snippet + ".";
+      if (month) return "Uncorrected severe · cited " + month + ".";
+      return "Uncorrected severe.";
     }
-    if (high24) return high24 + " High in 24 mo · all corrected.";
-    if (lastInspectionClean(acts)) return "No High in 24 months · last inspection clean.";
-    return "No High in 24 months.";
+    if (high24) return high24 + " severe in 24 mo · all corrected.";
+    if (lastInspectionClean(acts)) return "No severe in 24 months · last inspection clean.";
+    return "No severe in 24 months.";
   }
 
   function isScarDriver(text) {
-    return / High in 24 mo · all corrected\.?$/.test(String(text || ""));
+    return / severe in 24 mo · all corrected\.?$/.test(String(text || ""));
   }
 
   var api = {
@@ -276,7 +285,8 @@
     gradeOf: gradeOf,
     gradeDriver: gradeDriver,
     isScarDriver: isScarDriver,
-    findingSnippet: findingSnippet
+    findingSnippet: findingSnippet,
+    parentRiskWord: parentRiskWord
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -289,5 +299,6 @@
     root.gradeDriver = gradeDriver;
     root.isScarDriver = isScarDriver;
     root.findingSnippet = findingSnippet;
+    root.parentRiskWord = parentRiskWord;
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);

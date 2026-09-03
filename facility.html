@@ -104,7 +104,7 @@
 
   function mixHTML(g) {
     var cap = g.capped
-      ? '<p class="mix-cap">This file is capped at 79. Uncorrected High in the last 24 months cannot be erased. Google is a separate exhibit.</p>'
+      ? '<p class="mix-cap">This file is capped at 79. Uncorrected severe in the last 24 months cannot be erased. Google is a separate exhibit.</p>'
       : "";
     return '<div id="grade-mix" class="mix-quiet">' +
       "<div><b>" + signed(g.safety) + "</b><span>Safety</span></div>" +
@@ -171,9 +171,7 @@
   }
 
   function riskLabel(level) {
-    var l = String(level || "n/a");
-    if (l === "High") return "HIGH";
-    return l;
+    return String(parentRiskWord(level) || "n/a").toUpperCase();
   }
 
   function stars(n) {
@@ -310,7 +308,7 @@
     }).join("") : '<p class="muted">No published non-compliance rows. That can still mean a thin file — read the inspections above.</p>';
 
     var num = op.operation_number || op.operation_id;
-    var high = g.uncorrectedHigh ? '<div class="high-word">HIGH</div>' : "";
+    var high = g.uncorrectedHigh ? '<div class="high-word">SEVERE</div>' : "";
     app.innerHTML =
       '<div class="crumb"><a href="index.html">Search</a> / ' + escapeHtml(op.city || "Texas") + "</div>" +
       '<div class="folder-head"><div class="title-row">' + tileEl(g, defs, acts) + "<div>" +
